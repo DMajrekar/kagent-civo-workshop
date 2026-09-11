@@ -21,13 +21,24 @@ check() {
   if ! command -v "$bin" >/dev/null 2>&1; then
     printf '%s%smissing%s  -> %s\n' "$BOLD" "$RED" "$RESET" "$hint"; FAILED=1; return
   fi
-  ver="$(eval "$vercmd" 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)"
+  # No `head -1` before grep: kubectl prints "clientVersion:" first, so the
+  # version is never on line one. And `|| true`, because a grep that matches
+  # nothing exits 1, which under `set -e` kills the script instead of falling
+  # through to the "version unknown" branch below.
+  ver="$(eval "$vercmd" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 || true)"
   if [[ -z "$ver" ]]; then
     printf '%s%sfound%s (version unknown)\n' "$GREEN" "$BOLD" "$RESET"; return
   fi
-  # numeric compare major.minor
-  local have_maj="${ver%%.*}" rest="${ver#*.}" have_min="${rest%%.*}"
-  local want_maj="${min%%.*}" wrest="${min#*.}" want_min="${wrest%%.*}"
+  # Numeric compare on major.minor. These are deliberately separate statements:
+  # bash expands every word of a `local` line before assigning any of them, so
+  # `local a=$x b=${a#...}` reads `a` while it is still unset.
+  local have_maj have_min want_maj want_min rest
+  have_maj="${ver%%.*}"
+  rest="${ver#*.}"
+  have_min="${rest%%.*}"
+  want_maj="${min%%.*}"
+  rest="${min#*.}"
+  want_min="${rest%%.*}"
   if (( have_maj > want_maj )) || { (( have_maj == want_maj )) && (( have_min >= want_min )); }; then
     printf '%s%s%-10s%s ok (need >= %s)\n' "$BOLD" "$GREEN" "$ver" "$RESET" "$min"
   else
@@ -39,7 +50,7 @@ say "Checking the tools this workshop needs. Everything runs from your laptop"
 say "against your own Civo cluster -- nothing is installed system-wide."
 printf '\n'
 
-check kubectl 1.28 "kubectl version --client -o yaml" \
+check kubectl 1.28 "kubectl version --client -o json | grep gitVersion" \
   "https://kubernetes.io/docs/tasks/tools/  (macOS: brew install kubectl)"
 check helm    3.14 "helm version --short" \
   "https://helm.sh/docs/intro/install/  (macOS: brew install helm)"
@@ -56,24 +67,31 @@ printf '\n'
 say "Checking credentials..."
 printf '\n'
 
+# Two tiers. You need the first before the day; the second is handed out in
+# the room, so missing values there are a note, not a failure.
 cred() {
-  local name="$1"
+  local name="$1" required="$2"
   printf '  %-22s ' "$name"
   if [[ -n "${!name-}" ]]; then
     printf '%s%sset%s (%s...)\n' "$BOLD" "$GREEN" "$RESET" "${!name:0:6}"
-  else
+  elif [[ "$required" == "required" ]]; then
     printf '%s%smissing%s  -> add it to .env\n' "$BOLD" "$RED" "$RESET"; FAILED=1
+  else
+    printf '%s%snot yet%s  -> you get this at the workshop\n' "$DIM" "$YELLOW" "$RESET"
   fi
 }
 if [[ ! -f "$REPO_ROOT/.env" ]]; then
   fail ".env not found"
-  note "cp .env.example .env  then fill in the values from your workshop card"
+  note "cp .env.example .env  then add your Civo API key"
   FAILED=1
 else
-  cred CIVO_API_KEY
-  cred RELAX_API_KEY
-  cred MCP_ENDPOINT
-  cred MCP_TOKEN
+  cred CIVO_API_KEY required
+  printf '\n'
+  say "These are handed out in the room — you do not need them yet:"
+  printf '\n'
+  cred RELAX_API_KEY later
+  cred MCP_ENDPOINT later
+  cred MCP_TOKEN later
 fi
 
 printf '\n'
@@ -81,4 +99,7 @@ if (( FAILED )); then
   fail "Some prerequisites are missing -- fix the items above, then re-run: make doctor"
   exit 1
 fi
-ok "All prerequisites satisfied. Run 'make step-01' to create your cluster."
+ok "You are ready for the workshop."
+printf '\n'
+say "On the day, the first thing you will do is open the credentials page shown"
+say "on the slides and download a filled-in .env. Then 'make step-01'."

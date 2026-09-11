@@ -194,3 +194,7 @@ note "MCP_ENDPOINT=$MCP_URL"
 note "wall:      $WALL_URL"
 note "projector: $WALL_URL/wall"
 note "these go on the workshop cards"
+printf '\n'
+warn "Re-run 'make hub-07' now."
+note "The credential handout bakes MCP_ENDPOINT and the webhook URL into every"
+note ".env it issues, and it is still holding the old http:// addresses."

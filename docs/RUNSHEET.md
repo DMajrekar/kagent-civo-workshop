@@ -16,6 +16,10 @@ longer lead time midweek. Repo link plus exactly three instructions:
 2. `cp .env.example .env` and paste in the Civo key from their own account
 3. `make doctor` — must print all green
 
+`make doctor` deliberately does **not** fail on the missing model key, MCP
+endpoint or MCP token. Those are handed out in the room, and failing on them
+in advance would generate exactly the support email you are trying to avoid.
+
 Add one line: *"If `make doctor` does not pass, reply to this email — we will
 not have time to debug laptops on the day."* That sentence is worth ten minutes
 of session time.
@@ -25,8 +29,9 @@ of session time.
 | Time | Step | What is on screen | Notes |
 |------|------|-------------------|-------|
 | 00:00 | — | Welcome, what we're building | Diagram: their cluster → MCP → your hub |
-| 00:03 | `make step-01` | Cluster creating | **Everyone fires this now.** Async — returns immediately. |
-| 00:05 | — | Talk: what kagent is, why agents in-cluster | ~6 min of air cover while Civo provisions |
+| 00:02 | **credentials slide** | `…/join` + the passphrase | Everyone claims a slot and downloads their `.env`. Same name always returns the same credentials, so reloading is safe. |
+| 00:05 | `make step-01` | Cluster creating | **Everyone fires this now.** Async — returns immediately. |
+| 00:07 | — | Talk: what kagent is, why agents in-cluster | ~4 min of air cover while Civo provisions |
 | 00:11 | `make step-02` | kagent install + relax.ai ModelConfig | Blocks on cluster ready; stragglers catch up here |
 | 00:18 | `make step-03` | First agent + dashboard port-forward | First visual payoff. They ask it a question about their own cluster. |
 | 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
