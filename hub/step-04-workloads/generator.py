@@ -150,11 +150,19 @@ def incidents(rng, svc, ts, age_days, end_ts):
         for _ in range(rng.randint(45, 75)):
             out.append(("debug", fmt(rng, "template ctx={{'user': {id}, 'locale': 'en-GB', 'items': {n}}}"), {}))
 
-    # 5. auth: TLS cert expiry warning at every startup since 5 days ago
-    if svc == "auth" and age_days <= 5.0 and rng.random() < 0.02:
+    # 5. auth: TLS cert expiry, counting down. Nothing is failing -- this is a
+    # prediction, and it competes for the agent's attention against services
+    # that are actively on fire. It needs to be frequent enough to notice.
+    if svc == "auth" and age_days <= 5.0:
         days_left = int(9 + age_days)
-        out.append(("warn", f"TLS certificate for auth.internal expires in {days_left} days "
-                            f"(notAfter=2026-09-30T00:00:00Z)", {}))
+        if rng.random() < 0.06:
+            out.append(("warn", f"TLS certificate for auth.internal expires in {days_left} days "
+                                f"(notAfter=2026-09-30T00:00:00Z) -- renew before expiry", {}))
+        # An escalating note as the deadline closes, so a time-ordered read
+        # shows the countdown rather than a flat repeated line.
+        if days_left <= 10 and rng.random() < 0.03:
+            out.append(("warn", f"certificate renewal not yet performed for auth.internal; "
+                                f"{days_left} days remain before clients fail TLS handshake", {}))
 
     # 6. search: p99 latency creeping up ~8%/day, no errors at all
     if svc == "search":

@@ -29,7 +29,7 @@ of session time.
 | 00:05 | — | Talk: what kagent is, why agents in-cluster | ~6 min of air cover while Civo provisions |
 | 00:11 | `make step-02` | kagent install + relax.ai ModelConfig | Blocks on cluster ready; stragglers catch up here |
 | 00:18 | `make step-03` | First agent + dashboard port-forward | First visual payoff. They ask it a question about their own cluster. |
-| 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Guided prompts against seeded incidents. |
+| 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
 | 00:40 | `make step-05` | Daily error-report CronJob | Trigger it manually so they see output immediately |
 | 00:50 | `make step-06` | Cut the cord: own key, own Loki | They leave with a cluster that still works tomorrow |
 | 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |
