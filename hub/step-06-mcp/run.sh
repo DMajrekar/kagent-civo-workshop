@@ -26,10 +26,9 @@ say "first mint one. Viewer role: the MCP server is started with --disable-write
 say "but the token should not be able to mutate anything either way."
 
 GRAFANA_PW="$(cat "$STATE/grafana-admin-password")"
-kubectl -n "$NS" port-forward svc/grafana 3000:80 >/dev/null 2>&1 &
-PF_PID=$!
-trap 'kill $PF_PID 2>/dev/null || true' EXIT
-wait_for "port-forward to Grafana" 60 "curl -sf -o /dev/null http://127.0.0.1:3000/api/health"
+trap cleanup_port_forwards EXIT
+port_forward "$NS" svc/grafana 3000:80
+wait_for "Grafana to be healthy" 120 "curl -sf -o /dev/null http://127.0.0.1:3000/api/health"
 
 SA_TOKEN_FILE="$STATE/grafana-sa-token"
 if [[ ! -s "$SA_TOKEN_FILE" ]]; then

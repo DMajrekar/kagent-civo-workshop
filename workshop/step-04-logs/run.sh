@@ -75,10 +75,9 @@ run "kubectl -n kagent rollout status deploy/my-agent --timeout=180s"
 wait_for "my-agent to be ready" 300 \
   "[[ \"\$(kubectl -n kagent get agent my-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 
-kubectl -n kagent port-forward svc/my-agent 8081:8080 >/dev/null 2>&1 &
-PF=$!
-trap 'kill $PF 2>/dev/null || true' EXIT
-wait_for "a route to your agent" 60 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
+trap cleanup_port_forwards EXIT
+port_forward kagent svc/my-agent 8081:8080
+wait_for "your agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
 
 say ""
 say "Start with something simple, to prove it can see the data at all."

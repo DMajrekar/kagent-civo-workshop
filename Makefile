@@ -72,10 +72,11 @@ all:
 	  bash workshop/$$s/run.sh || exit $$?; \
 	done
 
-# Rehearsal: no pauses, fail fast. If this passes end to end, the live run will
-# not surprise you. Run it at least once the day before the event.
+# Rehearsal: no pauses, timed per step against the run sheet. If this passes
+# end to end from a deleted cluster, the live run will not surprise you.
+# Run it at least once the day before the event.
 rehearse:
-	@DEMO_AUTO=1 $(MAKE) all
+	@scripts/rehearse.sh
 
 hub-all:
 	@for s in $(HUB_STEPS); do \

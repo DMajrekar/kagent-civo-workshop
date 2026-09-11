@@ -37,8 +37,45 @@ if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then
   fi
 fi
 
+# Collect the cluster's volumes BEFORE deleting it. Civo does not delete the
+# volumes a cluster's PVCs created -- they are left "available" and keep
+# billing -- and once the cluster is gone the association is gone with it, so
+# you can no longer tell which volumes were yours.
+say "Finding the volumes this cluster created, before deleting it."
+VOLS=$(civo_cluster_volumes "$CID" "$REGION")
+if [[ -n "$VOLS" ]]; then
+  note "$(echo "$VOLS" | wc -l) volume(s) to clean up afterwards"
+else
+  note "no volumes found attached to this cluster"
+fi
+
 run "civo kubernetes remove '$CID' --region '$REGION' --yes"
+
+if [[ -n "$VOLS" ]]; then
+  say ""
+  say "Now the volumes. Civo leaves these behind when a cluster is deleted, and"
+  say "they keep billing -- this is the step people miss."
+  for v in $VOLS; do
+    run "civo volume remove '$v' --region '$REGION' --yes || true"
+  done
+fi
+
 rm -f "$STATE/workshop.kubeconfig" "$STATE/cluster.env"
+
 printf '\n'
-ok "Cluster deleted. Any Civo LoadBalancers and volumes it created go with it."
+ok "Cluster and its volumes deleted."
+
+# Give the API a moment: volumes deleted a second ago can still list as
+# available, and warning about the ones we just removed is worse than useless.
+sleep 5
+ORPHANS=$(civo_orphan_volumes "$REGION")
+if [[ -n "$ORPHANS" ]]; then
+  warn "There are still unattached volumes in $REGION that are billing:"
+  echo "$ORPHANS" | while IFS=$'\t' read -r id name size; do
+    note "  $id  $name  $size"
+  done
+  note "these may be from other work — remove with: civo volume remove <id> --region $REGION"
+else
+  ok "no unattached volumes left in $REGION"
+fi
 note "check nothing is left behind:  civo kubernetes ls --region $REGION"

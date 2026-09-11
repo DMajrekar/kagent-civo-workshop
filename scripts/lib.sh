@@ -124,6 +124,49 @@ run_quiet() {
   ok "done"
 }
 
+# ------------------------------------------------------------ port-forwards
+#
+# `kubectl port-forward` exits if the pod is not accepting connections yet,
+# which on a cold cluster it often is not even once the resource reports Ready.
+# Backgrounding it with output discarded means you never see that -- you just
+# watch a 60-second timeout and learn nothing. Start it, check the port really
+# answers, and restart it if the process died.
+#
+#   port_forward <ns> <target> <local:remote> [attempts]
+# Sets PF_PIDS so cleanup_port_forwards can tear them all down.
+PF_PIDS=""
+
+port_forward() {
+  local ns="$1" target="$2" ports="$3" attempts="${4:-5}"
+  local lport="${ports%%:*}"
+  local i pid
+  for (( i = 1; i <= attempts; i++ )); do
+    kubectl -n "$ns" port-forward "$target" "$ports" >/dev/null 2>&1 &
+    pid=$!
+    local waited=0
+    while (( waited < 15 )); do
+      if ! kill -0 "$pid" 2>/dev/null; then break; fi
+      if (echo > "/dev/tcp/127.0.0.1/$lport") >/dev/null 2>&1; then
+        PF_PIDS="$PF_PIDS $pid"
+        return 0
+      fi
+      sleep 1; waited=$(( waited + 1 ))
+    done
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    (( i < attempts )) && sleep 3
+  done
+  fail "could not port-forward to $target in namespace $ns after $attempts attempts"
+  note "kubectl -n $ns get pod,endpoints -l ... to see whether it is actually serving"
+  return 1
+}
+
+cleanup_port_forwards() {
+  local p
+  for p in $PF_PIDS; do kill "$p" 2>/dev/null || true; done
+  PF_PIDS=""
+}
+
 # ------------------------------------------------------------------- waiting
 
 # Poll until a command succeeds. Used so a step can be re-run safely while the
@@ -181,4 +224,44 @@ civo_cluster_exists() { [[ -n "$(civo_cluster_id "$1" "$2")" ]]; }
 # civo_cluster_field <id> <region> <field>  e.g. Status
 civo_cluster_field() {
   civo kubernetes show "$1" --region "$2" -o custom -f "$3" 2>/dev/null | tail -1
+}
+
+# civo_cluster_volumes <cluster-id> <region> -> volume IDs belonging to it
+#
+# Deleting a Civo cluster does NOT delete the volumes its PVCs created. They
+# are left "available" and keep billing, and the only warning is a line in the
+# delete output that scrolls past. Collect them before deleting the cluster --
+# afterwards the association is gone and you cannot tell whose they were.
+civo_cluster_volumes() {
+  local cid="$1" region="$2"
+  civo volume ls --region "$region" -o json 2>/dev/null \
+    | CID="$cid" python3 -c '
+import json, os, sys
+want = os.environ["CID"]
+try:
+    rows = json.load(sys.stdin) or []
+except Exception:
+    sys.exit(0)
+for v in rows:
+    if v.get("cluster_id") == want or v.get("cluster") == want:
+        print(v.get("id", ""))
+'
+}
+
+# Report volumes with no cluster and no instance -- leftovers that still bill.
+civo_orphan_volumes() {
+  civo volume ls --region "${1:-lon1}" -o json 2>/dev/null \
+    | python3 -c '
+import json, sys
+try:
+    rows = json.load(sys.stdin) or []
+except Exception:
+    sys.exit(0)
+for v in rows:
+    if not (v.get("cluster_id") or v.get("cluster") or v.get("instance_id") or v.get("instance")):
+        vid = v.get("id", "")
+        name = v.get("name", "")
+        size = v.get("size_gb", v.get("size", "?"))
+        print("%s\t%s\t%sGB" % (vid, name, size))
+'
 }

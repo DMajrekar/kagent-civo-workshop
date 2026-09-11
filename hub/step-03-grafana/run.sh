@@ -63,10 +63,9 @@ wait_for "Grafana to be ready" 300 \
 
 # Verify the datasource actually resolves -- a Grafana that is up but cannot
 # reach Loki fails later, inside mcp-grafana, where it is much harder to read.
-kubectl -n "$NS" port-forward svc/grafana 3000:80 >/dev/null 2>&1 &
-PF_PID=$!
-trap 'kill $PF_PID 2>/dev/null || true' EXIT
-wait_for "port-forward to Grafana" 60 "curl -sf -o /dev/null http://127.0.0.1:3000/api/health"
+trap cleanup_port_forwards EXIT
+port_forward "$NS" svc/grafana 3000:80
+wait_for "Grafana to be healthy" 120 "curl -sf -o /dev/null http://127.0.0.1:3000/api/health"
 
 run "curl -sS -u 'admin:$GRAFANA_PW' http://127.0.0.1:3000/api/datasources | jq -r '.[] | \"\\(.name)  type=\\(.type)  uid=\\(.uid)\"'"
 

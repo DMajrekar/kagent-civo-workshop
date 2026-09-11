@@ -83,7 +83,26 @@ def main():
     # The final assistant turn is what a human wants; earlier parts are the
     # agent's intermediate tool chatter.
     if parts:
-        print(parts[-1].strip())
+        answer = parts[-1].strip()
+        # A failing model provider comes back as ordinary text in the A2A
+        # envelope, so "there is text" is not the same as "it worked". Without
+        # this check a 401 from the provider reads as a perfectly good answer.
+        low = answer.lower()
+        signatures = [
+            "chat completion request failed", "401 unauthorized",
+            "invalid_request_error", "incorrect api key",
+            "insufficient_quota", "rate limit", "429 too many requests",
+            "model not found", "context length",
+        ]
+        hit = next((sig for sig in signatures if sig in low), None)
+        if hit:
+            print(f"{R}the agent could not reach its model provider{X}\n")
+            print(answer[:900])
+            print(f"\n{Y}matched: {hit!r}{X}")
+            print(f"{D}check:  kubectl -n kagent get modelconfig default-model-config -o yaml{X}")
+            print(f"{D}        kubectl -n kagent logs deploy/<agent> --tail=40{X}")
+            sys.exit(3)
+        print(answer)
     else:
         print(f"{Y}no text in the reply — rerun with --raw to see the envelope{X}")
         sys.exit(1)

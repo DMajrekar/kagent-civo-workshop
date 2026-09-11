@@ -17,10 +17,9 @@ wait_for "the built-in k8s-agent to be ready" 300 \
   "[[ \"\$(kubectl -n kagent get agent k8s-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 
 # Port-forward for the rest of the step.
-kubectl -n kagent port-forward svc/k8s-agent 8080:8080 >/dev/null 2>&1 &
-PF1=$!
-trap 'kill $PF1 $PF2 2>/dev/null || true' EXIT
-wait_for "a route to the agent" 60 "curl -sf -o /dev/null http://127.0.0.1:8080/.well-known/agent-card.json"
+trap cleanup_port_forwards EXIT
+port_forward kagent svc/k8s-agent 8080:8080
+wait_for "the agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8080/.well-known/agent-card.json"
 
 run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8080 \
   'How many pods are running in the kagent namespace, and are any of them unhealthy?'"
@@ -40,9 +39,8 @@ wait_for "my-agent to be ready" 300 \
   "[[ \"\$(kubectl -n kagent get agent my-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 run "kubectl -n kagent get agents"
 
-kubectl -n kagent port-forward svc/my-agent 8081:8080 >/dev/null 2>&1 &
-PF2=$!
-wait_for "a route to your agent" 60 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
+port_forward kagent svc/my-agent 8081:8080
+wait_for "your agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
 
 run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8081 \
   'What namespaces exist in this cluster, and what is running in each?'"

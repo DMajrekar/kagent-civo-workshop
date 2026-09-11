@@ -37,11 +37,25 @@ if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then
   fi
 fi
 
+# Same trap as the attendee cleanup: Civo leaves a cluster's volumes behind,
+# and the hub's Loki volume is 20GB.
+VOLS=$(civo_cluster_volumes "$CID" "$REGION")
+[[ -n "$VOLS" ]] && note "$(echo "$VOLS" | wc -l) volume(s) will need removing after the cluster"
+
 run "civo kubernetes remove '$CID' --region '$REGION' --yes"
+
+for v in $VOLS; do
+  run "civo volume remove '$v' --region '$REGION' --yes || true"
+done
+
 say ""
 say "The LoadBalancers for the MCP endpoint and the wall are deleted with the"
 say "cluster. Confirm, because they bill separately if they are ever orphaned:"
 run "civo loadbalancer ls --region '$REGION' || true"
+say ""
+say "And any volumes left unattached:"
+ORPHANS=$(civo_orphan_volumes "$REGION")
+[[ -n "$ORPHANS" ]] && echo "$ORPHANS" || ok "none"
 
 rm -f "$STATE/hub.kubeconfig" "$STATE/mcp-endpoint" "$STATE/sink-endpoint"
 printf '\n'

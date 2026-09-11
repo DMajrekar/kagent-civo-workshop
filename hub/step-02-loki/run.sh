@@ -37,10 +37,9 @@ run "kubectl -n '$NS' get pods,pvc,svc"
 say ""
 say "Smoke test: push a line dated two days ago, then read it back."
 
-kubectl -n "$NS" port-forward svc/loki 3100:3100 >/dev/null 2>&1 &
-PF_PID=$!
-trap 'kill $PF_PID 2>/dev/null || true' EXIT
-wait_for "port-forward to Loki" 60 "curl -sf -o /dev/null http://127.0.0.1:3100/ready"
+trap cleanup_port_forwards EXIT
+port_forward "$NS" svc/loki 3100:3100
+wait_for "Loki to be ready" 120 "curl -sf -o /dev/null http://127.0.0.1:3100/ready"
 
 NOW_NS=$(( $(date +%s) * 1000000000 ))
 OLD_NS=$(( NOW_NS - 172800000000000 ))

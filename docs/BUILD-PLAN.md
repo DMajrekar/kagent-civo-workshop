@@ -80,12 +80,11 @@ consequences for how you build it:
       LoadBalancers, taking the hub from three to one.
 - [x] Cert-expiry incident (#5) — resolved. Signal raised, and the prompt that
       reaches it is in docs/DEMO-PROMPTS.md.
-- [ ] Time each step properly against RUNSHEET.md.
+- [x] Timed each step — `make rehearse`, numbers in RUNSHEET.md.
 
 ## Fri 18 Sep — rehearsal
 
-- [ ] `make rehearse` (`DEMO_AUTO=1`) green end to end against a throwaway
-      cluster
+- [x] `make rehearse` green end to end from a deleted cluster (13m51s)
 - [ ] Full **60-minute timed run** on a clean laptop. Time each step against
       RUNSHEET.md and cut whatever overruns.
 - [ ] Second run on a deliberately broken laptop (no helm, stale kubectl) to

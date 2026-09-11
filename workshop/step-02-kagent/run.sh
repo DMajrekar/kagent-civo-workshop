@@ -87,6 +87,15 @@ say ""
 say "This is the whole model wiring, in one resource:"
 run "kubectl -n kagent get modelconfig default-model-config -o yaml | grep -A8 '^spec:'"
 
+say ""
+say "Agents read their model config when they start, and Helm started the"
+say "built-in one before that patch existed -- so right now it is still trying"
+say "to reach api.openai.com with a relax.ai key. Restart it."
+for d in $(kubectl -n kagent get deploy -o name 2>/dev/null | grep -E 'agent$' | grep -v 'kagent-'); do
+  run "kubectl -n kagent rollout restart $d"
+done
+run "kubectl -n kagent rollout status deploy/k8s-agent --timeout=300s"
+
 printf '\n'
 ok "kagent is running and knows how to reach relax.ai."
 note "kubeconfig: $KUBECONFIG"

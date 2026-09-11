@@ -34,6 +34,33 @@ of session time.
 | 00:50 | `make step-06` | Cut the cord: own key, own Loki | They leave with a cluster that still works tomorrow |
 | 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |
 
+## Measured timings
+
+A full rehearsal from a deleted cluster (`make rehearse`, 11 Sep):
+
+| step | machine time | slot |
+|------|--------------|------|
+| step-01 | 0m20s | 2m |
+| step-02 | 5m18s | 7m |
+| step-03 | 0m34s | 9m |
+| step-04 | 0m10s | 13m |
+| step-05 | 1m18s | 10m |
+| step-06 | 6m11s | 6m — **over** |
+| **total** | **13m51s** | 47m |
+
+The useful finding: **the machine needs about fourteen minutes of the hour.**
+Everything else is you talking, people typing, and questions. The slots are not
+tight — the room's pace is the constraint, not the tooling.
+
+Two caveats. Back-to-back timings run hot for step-02: in the session it starts
+~8 minutes after step-01, so the cluster is already up and step-02 does not pay
+for the wait. And step-04's ten seconds is the *setup* only — the guided
+questions afterwards are 30–80s each and are where its thirteen minutes
+actually go.
+
+Run `make rehearse` again after any change. It stops at the first failure,
+because a later step that quietly does a failed step's work reads as a pass.
+
 ## Buffer and cut-lines
 
 There is no slack in this. Decide **in advance** what you drop:
