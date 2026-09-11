@@ -1,0 +1,6 @@
+.env
+.env.local
+kubeconfig
+*.kubeconfig
+.state/
+*.tgz
