@@ -73,9 +73,11 @@ consequences for how you build it:
 
 ## Still open before the rehearsal
 
-- [ ] **TLS on both public endpoints.** The MCP endpoint and the wall are both
-      plain HTTP; bearer tokens cross the internet in clear text. Needs a DNS
-      name plus cert-manager.
+- [x] **TLS on both public endpoints** — `hub-08`. ingress-nginx plus
+      cert-manager with real Let's Encrypt certificates. Hostnames default to
+      sslip.io so no DNS setup is needed; set `HUB_DOMAIN` to use your own
+      domain, which reads better on a card. Also retires the two bare
+      LoadBalancers, taking the hub from three to one.
 - [ ] Cert-expiry incident (#5) does not surface from the open "about to break"
       question — the agent reaches for the OOM crashloop, which is a defensible
       answer. Either make #5 louder or use the direct prompt.

@@ -115,5 +115,5 @@ printf '\n'
 ok "The wall is live."
 note "attendees:  $SINK_URL"
 note "projector:  $SINK_URL/wall"
-warn "Plain HTTP, like the MCP endpoint. Same trade-off, same fix needed."
-note "next:  make step-05   (the report CronJob)"
+warn "Plain HTTP, like the MCP endpoint — hub-08 fixes both."
+note "next:  make hub-08   (TLS), then step-05"

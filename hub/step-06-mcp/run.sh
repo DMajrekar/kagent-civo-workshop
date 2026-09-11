@@ -280,8 +280,8 @@ run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token '$FIRST_TOKEN'
 printf '\n'
 ok "The MCP endpoint is live and authenticated."
 warn "This is plain HTTP — bearer tokens cross the internet in clear text."
-note "Fine for synthetic log data on a throwaway hub; put TLS in front before"
-note "the event if you would rather not demo that to a room of engineers."
+note "hub-08 puts TLS in front of it. Run that before handing the endpoint to"
+note "anyone; do not print this URL on a workshop card."
 note "endpoint: $MCP_URL"
 note "tokens:   $TOKENS_FILE"
-note "next:  make hub-07   (the webhook wall)"
+note "next:  make hub-07   (the webhook wall), then hub-08 (TLS)"
