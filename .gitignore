@@ -1,6 +1,17 @@
+# Runtime scratch: kubeconfigs, generated manifests, tokens, the claim ledger.
+.state/
+
+# Credentials
 .env
 .env.local
-kubeconfig
 *.kubeconfig
-.state/
+kubeconfig
+relax-keys.txt
+mcp-tokens.txt
+join-passphrase
+
+# Build noise
 *.tgz
+__pycache__/
+*.pyc
+.DS_Store

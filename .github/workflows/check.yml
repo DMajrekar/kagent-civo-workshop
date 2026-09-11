@@ -1,0 +1,70 @@
+name: check
+
+# Catches the class of bug that actually bit us while building this: a syntax
+# error or an unbound variable in a step script, a values file that no longer
+# parses. None of it needs cloud credentials, so it runs on every push.
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "::error file=$f::bash syntax error"; fail=1; }
+          done < <(find . -name '*.sh' -not -path './.git/*')
+          exit $fail
+
+      - name: Shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # SC1091: we source lib.sh by a computed path.
+          # SC2086: deliberate word splitting when building helm flag lists.
+          find . -name '*.sh' -not -path './.git/*' -print0 \
+            | xargs -0 shellcheck -S warning -e SC1091,SC2086 || true
+
+      - name: Python syntax
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            python3 -m py_compile "$f" || { echo "::error file=$f::python syntax error"; fail=1; }
+          done < <(find . -name '*.py' -not -path './.git/*')
+          exit $fail
+
+      - name: YAML parses
+        run: |
+          python3 - <<'PY'
+          import glob, sys, yaml
+          bad = 0
+          for f in glob.glob('**/*.yaml', recursive=True) + glob.glob('**/*.yml', recursive=True):
+              if '.git' in f: continue
+              try:
+                  list(yaml.safe_load_all(open(f)))
+              except Exception as e:
+                  print(f"::error file={f}::{e}"); bad = 1
+          sys.exit(bad)
+          PY
+
+      - name: Every step has a title
+        run: |
+          fail=0
+          for d in workshop/step-* hub/step-*; do
+            grep -q '^# title: ' "$d/run.sh" || {
+              echo "::error file=$d/run.sh::missing '# title:' line (make help reads it)"; fail=1; }
+          done
+          exit $fail
+
+      - name: No credentials committed
+        run: |
+          if git grep -nE 'rak_[A-Za-z0-9]{20,}|glsa_[A-Za-z0-9_]{20,}|BEGIN [A-Z ]*PRIVATE KEY' \
+               -- . ':!.github/workflows/check.yml' | grep -v PLACEHOLDER; then
+            echo "::error::something that looks like a credential is committed"
+            exit 1
+          fi
+          echo "clean"

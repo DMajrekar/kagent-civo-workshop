@@ -33,6 +33,11 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export REPO_ROOT
 
+# Scratch space for kubeconfigs, generated manifests and tokens. Gitignored.
+# Created here rather than per-step: several steps write into it and used to
+# depend on an earlier one having made it first.
+mkdir -p "$REPO_ROOT/.state"
+
 # ---------------------------------------------------------------- env loading
 
 # Load .env if present. Values already in the environment win, so you can

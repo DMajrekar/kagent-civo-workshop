@@ -12,15 +12,27 @@ morning. You leave with a cluster and a repo you can keep extending.
 ## Before the workshop (10 minutes, please do this in advance)
 
 ```bash
-git clone <this-repo> && cd kagent-workshop
-cp .env.example .env      # then fill in the values from your workshop card
+git clone https://github.com/dmajrekar/kagent-civo-workshop
+cd kagent-civo-workshop
+cp .env.example .env      # then add your Civo API key
 make doctor
 ```
 
-`make doctor` must print all green. **If it doesn't, get in touch before the
-day** — there isn't time to debug laptop setups during a 60-minute session.
+You only need your own **Civo API key** in advance — get one at
+[dashboard.civo.com/security](https://dashboard.civo.com/security). The model
+key and the workshop endpoints are handed out in the room, and `make doctor`
+will tell you those are "not yet" rather than failing.
+
+`make doctor` must otherwise print all green. **If it doesn't, get in touch
+before the day** — there isn't time to debug laptop setups during a 60-minute
+session.
 
 ## On the day
+
+Open the credentials page shown on the slides, enter the passphrase and your
+name, and download the `.env` it gives you — model key, log endpoint and your
+own report inbox, all filled in. Drop it in next to this README (keeping your
+own Civo key) and you're ready.
 
 ```bash
 make            # see every step
