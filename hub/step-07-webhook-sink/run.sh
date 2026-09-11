@@ -146,6 +146,15 @@ YAML
 run "kubectl apply -f '$STATE/sink.yaml'"
 run "kubectl -n '$NS' rollout status deploy/webhook-sink --timeout=300s"
 
+if [[ -n "${RESET_CLAIMS-}" ]]; then
+  warn "RESET_CLAIMS=1 — forgetting every existing claim"
+  note "anyone who already downloaded a .env keeps working, but the next"
+  note "claimants will be issued the same credentials over again"
+  run "kubectl -n '$NS' exec deploy/webhook-sink -- rm -f /data/ledger.json"
+  run "kubectl -n '$NS' rollout restart deploy/webhook-sink"
+  run "kubectl -n '$NS' rollout status deploy/webhook-sink --timeout=300s"
+fi
+
 if [[ "$SINK_SVC_TYPE" == "ClusterIP" ]]; then
   SINK_URL="$PUB_URL"
 else
@@ -223,6 +232,13 @@ printf '\n'
 ok "The wall is live."
 note "credentials: $SINK_URL/join     <- this goes on your slides"
 note "passphrase:  $PASSPHRASE"
+note "how many have claimed:"
+note "  curl -sS -XPOST $SINK_URL/api/claims -H 'Content-Type: application/json' \\"
+note "    -d '{\"passphrase\":\"$PASSPHRASE\"}' | jq"
+if [[ "$NKEYS" -gt 0 && "$NKEYS" -lt 25 ]]; then
+  warn "only $NKEYS key(s) in the pool — attendees beyond that will share."
+  note "add the rest to $KEYS_FILE and re-run; existing claims are kept."
+fi
 note "attendees:   $SINK_URL"
 note "projector:   $SINK_URL/wall"
 if [[ "$SINK_URL" == https://* ]]; then
