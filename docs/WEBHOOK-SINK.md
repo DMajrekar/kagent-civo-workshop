@@ -32,23 +32,35 @@ teaching point than everyone getting identical output.
 
 Single container, no database.
 
-- `POST /hook/:code` — accept any content type, store, return 204
+- `POST /hook/:code` — accept any content type, buffer it, return 204
 - `GET /c/:code` — HTML page, live via SSE (poll fallback for hostile WiFi)
 - `GET /api/c/:code` — JSON, for the curious
-- `GET /wall` — all codes
-- `POST /api/code` — mint a new code
+- `GET /wall` — every key the server has seen a delivery for
+- Minting a code needs no endpoint at all — the page generates a word pair
+  client-side and writes it to `localStorage`. Collisions don't matter much
+  (two people would share a page), but generate from a ~2000-word list and
+  check against nothing; at 25 attendees the birthday odds are negligible.
 
-Storage: **SQLite on a PVC.** In-memory would have been fine for a
-sixty-minute workshop, but the hub now runs until 2026-10-26 and attendees'
-CronJobs keep posting a report every morning for a month. A pod restart three
-days in would silently invalidate everyone's code and their reports would
-vanish into a 404 they never see. Durable codes, cheap.
+Storage: **none on the server.** No database, no PVC, no volume.
 
-- Codes: no expiry before 2026-10-26 — they're in people's `.env` files.
-- Deliveries: ring buffer, last 30 per code. A month of dailies is ~30, so
-  that keeps the whole history without unbounded growth.
-- Still `replicas: 1` — a PVC-backed SQLite doesn't want two writers, and
-  there's no reason to scale this.
+The trick is that a code is never *registered* — it's an opaque routing key,
+not a record. `POST /hook/<anything>` is accepted and buffered under that key.
+Nothing to invalidate, so a pod restart can't break anyone's `.env`; their
+CronJob keeps posting to the same URL and it keeps working.
+
+- **Server:** in-memory ring buffer, last 30 deliveries per key. A month of
+  dailies is ~30, so that's the full history while it's up. Cap the number of
+  live keys so a loop can't exhaust memory. Total footprint is kilobytes.
+- **Browser:** the page keeps the code *and* an append-only archive of
+  deliveries it has already seen in `localStorage`, and renders the merge of
+  that archive with whatever the server currently holds. History then lives on
+  the attendee's machine and survives hub restarts entirely.
+- `replicas: 1`, no volumes, `emptyDir` if it needs scratch at all.
+
+Wrap every `localStorage` read and write in try/catch — it throws outright in
+a private window and in some locked-down corporate browser profiles, and a
+page that white-screens on a projector because storage was blocked is a bad
+minute. Fall back to server-only rendering when it's unavailable.
 
 ## Guard rails
 
@@ -78,6 +90,13 @@ advert for kagent than anything that happens in the room.
 Two things follow from that: the log generators on the hub have to keep
 running (an empty report every day is worse than no report), and the page
 should show a timestamp per delivery so a stale one is obvious at a glance.
+
+Be straight with people about what browser-only history means, in one line on
+the page: it's **this browser on this device**. Clear site data, switch to
+their laptop from their phone, and the archive starts over — the server buffer
+backfills the last thirty, but anything older is gone. That's a fair trade for
+not running a database, and it only bites people who were already curious
+enough to come back, but it shouldn't be a surprise.
 
 ## Why not Slack
 
