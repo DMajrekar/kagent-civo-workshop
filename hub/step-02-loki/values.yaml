@@ -1,0 +1,98 @@
+# Loki for the workshop hub.
+#
+# Single binary, filesystem storage, no caches. This is deliberately the
+# smallest thing that holds seven seeded days plus five weeks of live logs and
+# survives ~25 agents querying it at once. It is not a production topology.
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false        # single tenant; the auth that matters is on the MCP proxy
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  storage:
+    type: filesystem
+  limits_config:
+    # Backfill writes logs with timestamps up to 7 days old. Loki rejects
+    # out-of-window samples by default, which would silently drop the entire
+    # seeded dataset -- the single most important setting in this file.
+    reject_old_samples: false
+    reject_old_samples_max_age: 336h
+
+    # Guard rails. 25 agents will write LogQL we did not review, and an
+    # unbounded query on a 2-node cluster takes the hub down for everyone.
+    max_query_length: 0s          # 0 = unlimited range; queries are capped by series/entries instead
+    max_query_series: 500
+    max_entries_limit_per_query: 5000
+    max_query_parallelism: 8
+    max_streams_per_user: 0
+    ingestion_rate_mb: 16
+    ingestion_burst_size_mb: 32
+    per_stream_rate_limit: 8MB
+    per_stream_rate_limit_burst: 16MB
+
+    # The hub runs until 22 Oct. Retain the full window, then drop.
+    retention_period: 1008h        # 42 days
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+
+  # Backfill visibility. Two defaults conspire to make backdated writes
+  # invisible for up to 30 minutes:
+  #   query_ingesters_within=3h -- a query for 2-day-old data asks the store,
+  #     not the ingester, so it never sees the unflushed chunk
+  #   chunk_idle_period=30m     -- which is how long until the store has it
+  # That is fine in production and useless for a workshop where we re-seed the
+  # dataset on the morning of the event and need it queryable immediately.
+  ingester:
+    chunk_idle_period: 1m
+    max_chunk_age: 5m
+  querier:
+    max_concurrent: 8
+    query_ingesters_within: 336h   # cover the whole backfill window
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits:   { memory: 2Gi }
+  persistence:
+    enabled: true
+    size: 20Gi
+
+# Everything below is off: distributed-mode components we do not use, and
+# memcached caches whose default requests alone would not fit on this cluster.
+backend:      { replicas: 0 }
+read:         { replicas: 0 }
+write:        { replicas: 0 }
+ingester:     { replicas: 0 }
+querier:      { replicas: 0 }
+queryFrontend: { replicas: 0 }
+queryScheduler: { replicas: 0 }
+distributor:  { replicas: 0 }
+compactor:    { replicas: 0 }
+indexGateway: { replicas: 0 }
+bloomCompactor: { replicas: 0 }
+bloomGateway: { replicas: 0 }
+chunksCache:  { enabled: false }
+resultsCache: { enabled: false }
+memcached:    { enabled: false }
+memcachedResults: { enabled: false }
+memcachedChunks:  { enabled: false }
+memcachedFrontend: { enabled: false }
+lokiCanary:   { enabled: false }
+test:         { enabled: false }
+gateway:      { enabled: false }
+monitoring:
+  dashboards:    { enabled: false }
+  rules:         { enabled: false }
+  serviceMonitor: { enabled: false }
+  selfMonitoring: { enabled: false, grafanaAgent: { installOperator: false } }
