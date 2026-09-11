@@ -38,10 +38,17 @@ Single container, no database.
 - `GET /wall` — all codes
 - `POST /api/code` — mint a new code
 
-Storage: in-memory ring buffer, last 20 deliveries per code, 48h TTL. SQLite on
-a PVC only if you want codes to survive a restart — for a 60-minute workshop,
-in-memory plus a `replicas: 1` Deployment is honestly fine, and one less thing
-to break.
+Storage: **SQLite on a PVC.** In-memory would have been fine for a
+sixty-minute workshop, but the hub now runs until 2026-10-26 and attendees'
+CronJobs keep posting a report every morning for a month. A pod restart three
+days in would silently invalidate everyone's code and their reports would
+vanish into a 404 they never see. Durable codes, cheap.
+
+- Codes: no expiry before 2026-10-26 — they're in people's `.env` files.
+- Deliveries: ring buffer, last 30 per code. A month of dailies is ~30, so
+  that keeps the whole history without unbounded growth.
+- Still `replicas: 1` — a PVC-backed SQLite doesn't want two writers, and
+  there's no reason to scale this.
 
 ## Guard rails
 
@@ -57,8 +64,20 @@ room full of people who have just been taught to automate things. Non-optional:
 - Codes are write-only targets: knowing a code lets you post to it and read it.
   That is acceptable here — nothing sensitive should go through it. Say so in
   the step-05 narration, because someone will ask.
-- Cap total codes (a few hundred) so a loop cannot exhaust memory.
-- Expire everything 48h after the event.
+- Cap total codes (a few hundred) so a loop cannot exhaust the disk.
+- Cap deliveries per code so a runaway CronJob over a month can't fill the PVC.
+- Everything goes away with the hub on 2026-10-26.
+
+## It lives for a month
+
+The sink isn't just a workshop prop — it's the only feedback loop attendees
+have that their agent is still working. Someone glancing at their page a
+fortnight later and seeing fourteen daily reports stacked up is a better
+advert for kagent than anything that happens in the room.
+
+Two things follow from that: the log generators on the hub have to keep
+running (an empty report every day is worse than no report), and the page
+should show a timestamp per delivery so a stale one is obvious at a glance.
 
 ## Why not Slack
 

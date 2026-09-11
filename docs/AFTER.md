@@ -5,31 +5,37 @@ things: **what still works tomorrow**, and **what it costs**.
 
 ## What breaks, and when
 
-During the workshop your agent depended on two things you don't own:
+Your agent depends on one thing you don't own: the workshop hub.
 
 | Dependency | Lifetime | What happens when it ends |
 |------------|----------|---------------------------|
-| The hub's MCP endpoint | ~7 days after the event | Agent loses its log tools; it still answers, but can only see your own cluster |
-| The shared relax.ai key | Rotated the evening of the event | Agent stops responding entirely — every call 401s |
+| The hub's MCP endpoint | **until 2026-10-26** | Agent loses its log tools. It still answers and can still see your own cluster, but the seven-days-of-logs trick stops working. |
+| Your relax.ai key | Yours — check with relax.ai for quota | Nothing, unless you exhaust the quota |
 
-`make step-06` cuts both cords. Run it before you leave if you can; run it at
-home if we ran out of time.
+So nothing breaks the day after the workshop. But put **2026-10-26** in your
+calendar now, because in a month you will not remember why your agent suddenly
+got less useful.
+
+`make step-06` cuts the cord ahead of that date. There's no rush — but it takes
+about two minutes, and doing it while the workshop is fresh is easier than
+reverse-engineering it in five weeks.
 
 ## Cutting the cord
 
-### 1. Your own relax.ai key
+### 1. Your relax.ai key
 
-The workshop key is shared across the room and gets rotated straight after.
-Sign up at [relax.ai](https://relax.ai), then:
+The key on your workshop card is yours — it isn't shared with anyone else and
+it isn't rotated after the event. Check your quota at
+[relax.ai](https://relax.ai); if you need to swap it for another one later:
 
 ```bash
 kubectl -n kagent create secret generic kagent-relax \
-  --from-literal=RELAX_API_KEY=<your-own-key> \
+  --from-literal=RELAX_API_KEY=<your-key> \
   --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n kagent rollout restart deploy/kagent
 ```
 
-Nothing else changes — the `ModelConfig` already points at your own secret.
+Nothing else changes — the `ModelConfig` already points at that secret by name.
 
 ### 2. Your own logs
 
@@ -42,7 +48,8 @@ make step-06            # deploys Loki + mcp-grafana + the log generators
 
 This deploys the same stack the hub ran, sized for one cluster, and repoints
 your `RemoteMCPServer` at `http://mcp-grafana.observability:8000/mcp` instead
-of the hub. Same tools, same agent, no external dependency.
+of the hub. Same tools, same agent, no external dependency — and it keeps
+working after 2026-10-26.
 
 If you'd rather point it at logs you actually care about, swap the Loki URL in
 the `mcp-grafana` Deployment for your own Grafana or Loki — the agent doesn't

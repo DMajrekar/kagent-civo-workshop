@@ -37,24 +37,27 @@ of session time.
 
 There is no slack in this. Decide **in advance** what you drop:
 
-- **First cut:** step-06's log stack becomes "read docs/AFTER.md at home", but
-  **still swap the relax.ai key live** (30 seconds) — otherwise everyone walks
-  out with a cluster that 401s by dinner.
+- **First cut:** step-06 entirely — it becomes "read docs/AFTER.md at home".
+  Safe now: attendees have their own relax.ai keys and the hub stays up until
+  **2026-10-26**, so nothing breaks when they walk out. This is your real
+  buffer; spend it on step-04 if the room is engaged.
 - **Second cut:** step-05 shows a pre-created CronJob's output rather than
   having them apply it (saves 6 min).
 - **Never cut:** step-04. It is the entire point of the workshop.
 
 ## The takeaway is a running cluster
 
-Attendees keep their clusters. That is the point — but it means two things must
-be said out loud, not left in a README:
+Attendees keep their clusters, their own relax.ai key, and hub access until
+**2026-10-26**. So the takeaway genuinely works — but two things still need
+saying out loud, not left in a README:
 
 1. **It bills to their account.** Say the number. Someone finding an unexpected
    Civo charge next month is the one outcome that turns a good workshop into a
    complaint.
-2. **The shared key and the hub endpoint expire.** If they don't run step-06,
-   their agent breaks within a day and they'll conclude kagent is flaky rather
-   than that the workshop credentials were temporary.
+2. **The hub goes away on 2026-10-26.** Put the date on the slide and in
+   docs/AFTER.md. A month is long enough that they will have forgotten, so the
+   date needs to be somewhere they'll find it later — which is why step-06
+   exists even though it's now the first thing you cut.
 
 ## Failure drills
 
@@ -63,5 +66,5 @@ be said out loud, not left in a README:
 | Someone's cluster fails to create | Spare kubeconfigs — pre-create 3 clusters as hot spares |
 | Venue WiFi dies | Nothing saves you. Have the recorded 3-min step-04 walkthrough. |
 | The hub MCP endpoint is down | `make step-04 FALLBACK=local` deploys a mini-Loki with the same seeded data into their cluster |
-| Shared relax.ai key is exhausted | Second key ready; `kubectl -n kagent create secret … --dry-run \| kubectl apply -f -` and restart |
+| An attendee's relax.ai key doesn't work | Keys are per-attendee, so this is one person, not the room. Keep 3 spare keys on a card; swapping is one `kubectl create secret --dry-run \| kubectl apply -f -` and a rollout restart. |
 | An attendee is 2 steps behind | Steps are idempotent and independent — tell them to run the *current* step, not catch up |

@@ -11,9 +11,16 @@ this are both at the top and both resolvable this week.
       back. Test every candidate model; pick on tool-call reliability, not on
       benchmark scores. **If no model does tool calls reliably, the workshop
       design changes and we need to know now, not on day 12.**
-- [ ] Confirm the shared relax.ai key's rate limit and quota. 25 people ×
-      an agent loop is a lot of requests in a 15-minute window. Ask relax.ai to
-      raise it if needed — that is a lead-time item.
+- [ ] **Kick off per-attendee relax.ai keys with the relax team.** This is now
+      the longest external dependency in the plan and it is not in your
+      control. Agree by day 3: how many keys (headcount + 20% for spares and
+      no-shows), what quota each carries, whether they persist after the event,
+      and the format you'll receive them in. **Keys must be in hand by day 10**
+      to make the workshop cards on day 12.
+- [ ] Ask the relax team about per-key rate limits too. Per-attendee keys mean
+      one person's runaway loop no longer takes down the room — but 25 agents
+      starting step-04 within the same 60 seconds is still a spike at the
+      account level.
 - [ ] Confirm Civo account quota allows N simultaneous clusters in one region.
       Default account limits will bite at ~10. **Lead-time item — raise a
       support ticket today if it needs lifting.**
@@ -28,10 +35,29 @@ this are both at the top and both resolvable this week.
 - [ ] `hub-04` the misbehaving-app fleet (see INCIDENTS.md)
 - [ ] `hub-05` backfill job — writes 7 days of history with past timestamps
 - [ ] `hub-06` mcp-grafana + bearer-auth proxy + cert-manager/TLS
+      — **issue per-attendee MCP tokens**, not one shared token. You're already
+        printing a per-person relax.ai key on the card, so a second string costs
+        nothing — and it's the difference between revoking one abusive token
+        and breaking the endpoint for everyone for the remaining three weeks.
 - [ ] `hub-07` webhook sink + wall view (see WEBHOOK-SINK.md)
 
 Get the hub up by **day 4** so it accumulates 11 days of genuine live logs on
 top of the backfill. Backfill is the guarantee; live traffic is the garnish.
+
+**The hub now runs until 2026-10-26** — a month past the event. That changes
+three things about how you build it:
+
+- **The log generators must keep running the whole month.** Attendees' CronJobs
+  report on "errors in the past 24 hours". If the generators stop the week
+  after the event, everyone's daily report quietly goes empty and the takeaway
+  rots without anyone understanding why. Treat generator uptime as the thing
+  that matters most post-event.
+- **Loki needs a retention policy and a big enough disk.** Seven days of seeded
+  data plus five weeks of live generation. Size the PVC for the full run, and
+  set `retention_period` so it doesn't simply fill up on day 30.
+- **It's a public endpoint running unattended for a month.** Rate limits and
+  query caps stop being a workshop-day concern and become a standing one. Set
+  a budget alert on the hub cluster too — it bills to you for the whole month.
 
 ## Days 5–8 — the attendee path
 
@@ -56,9 +82,9 @@ top of the backfill. Backfill is the guarantee; live traffic is the garnish.
 ## Days 12–13 — attendee comms
 
 - [ ] Pre-work email with repo link + the "reply if doctor fails" line
-- [ ] Decide and publish the hub's shutdown date — attendees keep their
-      clusters, so they need to know when the shared MCP endpoint stops
-      answering. Put the date in docs/AFTER.md and say it in the room.
+- [ ] Workshop cards carry four things per person: cluster naming convention,
+      their relax.ai key, their MCP token, and the hub shutdown date
+      (**2026-10-26**). The date is also on a slide and in docs/AFTER.md.
 - [ ] Workshop cards: cluster naming convention, MCP endpoint, MCP token,
       relax.ai key
 - [ ] Record the 3-minute step-04 walkthrough as WiFi insurance
@@ -73,5 +99,9 @@ top of the backfill. Backfill is the guarantee; live traffic is the garnish.
 ## Day 15 — event
 
 - [ ] Morning: `make hub-05` re-seed, smoke-test the MCP endpoint end to end
-- [ ] After: rotate the MCP token, `make hub-99` teardown or leave up if you
-      promised attendees continued access (decide, and tell them which)
+- [ ] After: **leave the hub up until 2026-10-26.** Don't rotate the MCP
+      tokens — attendees are still using them.
+- [ ] Set a calendar reminder for 2026-10-24: warn attendees the endpoint is
+      about to go, pointing at `make step-06`. Two days' notice turns "my agent
+      broke" into "I knew that was coming".
+- [ ] 2026-10-26: `make hub-99` teardown.
