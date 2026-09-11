@@ -15,7 +15,7 @@ STATE="$REPO_ROOT/.state"
 export KUBECONFIG="$STATE/hub.kubeconfig"
 [[ -f "$KUBECONFIG" ]] || { fail "no hub kubeconfig — run 'make hub-01' first"; exit 1; }
 NS="${OBS_NAMESPACE:-observability}"
-N_TOKENS="${ATTENDEE_COUNT:-30}"
+N_TOKENS="${ATTENDEE_COUNT:-60}"   # 50 attendees plus spares
 MCP_IMAGE="${MCP_IMAGE:-mcp/grafana:latest}"
 
 banner "Hub — step 06: the MCP endpoint"
@@ -58,13 +58,16 @@ grep -q . "$SA_TOKEN_FILE" || { fail "empty Grafana service account token"; exit
 ok "Grafana service account token ready ($SA_TOKEN_FILE)"
 
 # ------------------------------------------------------- attendee tokens
+# Top up rather than regenerate: existing tokens may already be in someone's
+# .env, and rewriting the file would silently lock them out.
 TOKENS_FILE="$STATE/mcp-tokens.txt"
-if [[ ! -s "$TOKENS_FILE" ]]; then
-  : > "$TOKENS_FILE"
-  for i in $(seq 1 "$N_TOKENS"); do
+touch "$TOKENS_FILE"; chmod 600 "$TOKENS_FILE"
+HAVE=$(grep -c . "$TOKENS_FILE" 2>/dev/null || echo 0)
+if (( HAVE < N_TOKENS )); then
+  for (( i = HAVE + 1; i <= N_TOKENS; i++ )); do
     printf 'attendee-%02d %s\n' "$i" "$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 28)" >> "$TOKENS_FILE"
   done
-  chmod 600 "$TOKENS_FILE"
+  (( HAVE > 0 )) && note "topped up from $HAVE to $N_TOKENS tokens (existing ones kept)"
 fi
 ok "$(wc -l < "$TOKENS_FILE") attendee tokens ($TOKENS_FILE)"
 

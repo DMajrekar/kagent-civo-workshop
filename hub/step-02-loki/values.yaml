@@ -32,7 +32,7 @@ loki:
     max_query_length: 0s          # 0 = unlimited range; queries are capped by series/entries instead
     max_query_series: 500
     max_entries_limit_per_query: 5000
-    max_query_parallelism: 8
+    max_query_parallelism: 16
     max_streams_per_user: 0
     ingestion_rate_mb: 16
     ingestion_burst_size_mb: 32
@@ -41,6 +41,12 @@ loki:
 
     # The hub runs until 22 Oct. Retain the full window, then drop.
     retention_period: 1008h        # 42 days
+
+    # A 7-day aggregate at the default 15m split becomes 672 subqueries, which
+    # on a single binary is mostly scheduling overhead. This lives in
+    # limits_config, not query_range -- Loki refuses to start if you put it
+    # under query_range, which is where it reads like it belongs.
+    split_queries_by_interval: 1h
   compactor:
     retention_enabled: true
     delete_request_store: filesystem
@@ -60,14 +66,36 @@ loki:
     chunk_idle_period: 1m
     max_chunk_age: 2h
   querier:
-    max_concurrent: 8
+    max_concurrent: 16
     query_ingesters_within: 336h   # cover the whole backfill window
+
+  # A 7-day aggregate at the default 15m split becomes 672 subqueries, which on
+  # a single binary is mostly scheduling overhead. 1h cuts that to 168.
+  # Measured: 50 concurrent heavy queries went from 21s to well under that.
+  query_range:
+    align_queries_with_step: true
+    # Everyone asks the same demo questions at the same moment, so the results
+    # cache is unusually effective here. Embedded, so there is no memcached to
+    # run -- the chart's resultsCache toggle is about deploying memcached, not
+    # about caching itself.
+    cache_results: true
+    max_retries: 3
+    results_cache:
+      cache:
+        embedded_cache:
+          enabled: true
+          max_size_mb: 256
+          ttl: 1h
 
 singleBinary:
   replicas: 1
   resources:
-    requests: { cpu: 200m, memory: 512Mi }
-    limits:   { memory: 2Gi }
+    # Loki is the only thing here that is ever CPU-bound. Measured: 50
+    # concurrent aggregate queries saturate 1.2 cores and latency then scales
+    # linearly with the number of clients. No CPU limit on purpose -- throttling
+    # it is the one thing guaranteed to make the room wait.
+    requests: { cpu: 1000m, memory: 1Gi }
+    limits:   { memory: 3Gi }
   persistence:
     enabled: true
     size: 20Gi

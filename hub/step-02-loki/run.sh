@@ -17,10 +17,34 @@ say "days ago, and Loki would otherwise drop every one of them silently."
 run "kubectl create namespace '$NS' --dry-run=client -o yaml | kubectl apply -f -"
 run "helm repo add grafana https://grafana.github.io/helm-charts --force-update >/dev/null && helm repo update grafana >/dev/null && echo ok"
 
+# Loki is the only CPU-bound component. If the cluster has a bigger node pool,
+# pin it there; one process cannot use more cores than its node has, so adding
+# more small nodes does nothing for query latency.
+BIG_SIZE="${LOKI_NODE_SIZE:-g4s.kube.large}"
+# A values overlay, not --set: the label key contains both dots and a slash,
+# and escaping that through helm's --set parser and a shell round-trip silently
+# produced no nodeSelector at all.
+PIN=""
+if kubectl get nodes -l "kubernetes.civo.com/civo-node-size=$BIG_SIZE" \
+     --no-headers 2>/dev/null | grep -q .; then
+  cat > "$STATE/loki-pin.yaml" <<YAML
+singleBinary:
+  nodeSelector:
+    kubernetes.civo.com/civo-node-size: ${BIG_SIZE}
+YAML
+  PIN="--values '$STATE/loki-pin.yaml'"
+  ok "found a $BIG_SIZE node — pinning Loki to it"
+else
+  warn "no $BIG_SIZE node in this cluster; Loki will share a small one"
+  note "at ~50 concurrent agents that is the bottleneck. Add a pool with:"
+  note "  civo kubernetes node-pool create <cluster> --size $BIG_SIZE --nodes 1"
+fi
+
 run "helm upgrade --install loki grafana/loki \
   --namespace '$NS' \
   --version '${LOKI_CHART_VERSION:-6.24.0}' \
   --values '$HERE/values.yaml' \
+  $PIN \
   --wait --timeout 10m"
 
 wait_for "Loki to be ready" 600 \

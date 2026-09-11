@@ -52,7 +52,24 @@ run "( unset KUBECONFIG; civo kubernetes config '$HUB_ID' --region '$HUB_REGION'
 chmod 600 "$KUBECONFIG"
 kubectl config current-context >/dev/null 2>&1 || { fail "kubeconfig did not parse"; exit 1; }
 
-wait_for "all nodes Ready" 600 \
+# Loki is the only CPU-bound component and it is a single process, so it cannot
+# use more cores than its node has. Measured with 50 concurrent agent queries:
+# on a 2-core node 22.7s each, on a 4-core node 12.1s, and 100 concurrent went
+# from two thirds failing with 504s to all succeeding. Adding more small nodes
+# does nothing for this -- it needs one bigger node.
+LOKI_SIZE="${LOKI_NODE_SIZE:-g4s.kube.large}"
+if ! civo kubernetes show "$HUB_ID" --region "$HUB_REGION" -o custom -f Pools 2>/dev/null \
+     | grep -q "$LOKI_SIZE"; then
+  say ""
+  say "Adding a larger node for Loki to sit on."
+  run "civo kubernetes node-pool create '$HUB_ID' --region '$HUB_REGION' \
+    --size '$LOKI_SIZE' --nodes 1 --yes"
+  HUB_NODES=$(( HUB_NODES + 1 ))
+else
+  ok "a $LOKI_SIZE node pool already exists"
+fi
+
+wait_for "all nodes Ready" 900 \
   "[[ \$(kubectl get nodes --no-headers 2>/dev/null | grep -c ' Ready ') -ge $HUB_NODES ]]"
 
 run "kubectl get nodes -o wide"
