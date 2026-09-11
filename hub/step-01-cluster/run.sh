@@ -27,7 +27,7 @@ note "cluster: $HUB_NAME   region: $HUB_REGION   nodes: ${HUB_NODES}x $HUB_SIZE"
 civo apikey add workshop "$CIVO_API_KEY" >/dev/null 2>&1 || true
 civo apikey current workshop >/dev/null 2>&1 || true
 
-if civo kubernetes show "$HUB_NAME" --region "$HUB_REGION" >/dev/null 2>&1; then
+if civo_cluster_exists "$HUB_NAME" "$HUB_REGION"; then
   ok "cluster $HUB_NAME already exists — reusing it"
 else
   pause "create the cluster"
@@ -41,12 +41,14 @@ else
 fi
 
 # Poll rather than using --wait, so re-running the step while it builds is safe.
+HUB_ID="$(civo_cluster_id "$HUB_NAME" "$HUB_REGION")"
+[[ -n "$HUB_ID" ]] || { fail "cluster $HUB_NAME not found after create"; exit 1; }
 wait_for "cluster to become ACTIVE" 900 \
-  "[[ \"\$(civo kubernetes show '$HUB_NAME' --region '$HUB_REGION' -o custom -f Status 2>/dev/null)\" == 'ACTIVE' ]]"
+  "[[ \"\$(civo_cluster_field '$HUB_ID' '$HUB_REGION' Status)\" == 'ACTIVE' ]]"
 
 # Write via stdout rather than --save: --save prompts for confirmation when
 # KUBECONFIG already points at the target path, which deadlocks a non-tty run.
-run "( unset KUBECONFIG; civo kubernetes config '$HUB_NAME' --region '$HUB_REGION' ) > '$KUBECONFIG'"
+run "( unset KUBECONFIG; civo kubernetes config '$HUB_ID' --region '$HUB_REGION' ) > '$KUBECONFIG'"
 chmod 600 "$KUBECONFIG"
 kubectl config current-context >/dev/null 2>&1 || { fail "kubeconfig did not parse"; exit 1; }
 

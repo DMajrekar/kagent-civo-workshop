@@ -150,3 +150,35 @@ need() {
 }
 
 load_env
+
+# ------------------------------------------------------------ civo helpers
+#
+# `civo kubernetes show <name>` matches on PREFIX, not exact name: asking for
+# "kagent-workshop" happily returns "kagent-workshop-hub". In a workshop where
+# everyone picks their own cluster name and a shared hub exists in the same
+# account, that is how somebody ends up deploying into the instructor's
+# cluster. Always resolve to an ID by exact name.
+
+# civo_cluster_id <name> <region> -> prints the ID, or nothing if no exact match
+civo_cluster_id() {
+  local name="$1" region="$2"
+  civo kubernetes ls --region "$region" -o json 2>/dev/null \
+    | NAME="$name" python3 -c '
+import json, os, sys
+want = os.environ["NAME"]
+try:
+    rows = json.load(sys.stdin) or []
+except Exception:
+    sys.exit(0)
+for c in rows:
+    if c.get("name") == want:
+        print(c.get("id", "")); break
+'
+}
+
+civo_cluster_exists() { [[ -n "$(civo_cluster_id "$1" "$2")" ]]; }
+
+# civo_cluster_field <id> <region> <field>  e.g. Status
+civo_cluster_field() {
+  civo kubernetes show "$1" --region "$2" -o custom -f "$3" 2>/dev/null | tail -1
+}

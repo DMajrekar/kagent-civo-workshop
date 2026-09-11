@@ -118,14 +118,21 @@ def incidents(rng, svc, ts, age_days, end_ts):
         return [(lvl, msg, {**lbl, "version": ver}) for lvl, msg, lbl in out] or \
                [("__label__", "", {"version": ver})]
 
-    # 2. orders-db-proxy: connection pool exhausted nightly 02:00-02:40
+    # 2. orders-db-proxy: connection pool exhausted nightly 02:00-02:40.
+    # This has to be *loud*. A handful of errors an hour disappears into the
+    # baseline, and an agent aggregating by hour will honestly report that it
+    # found no scheduled problem -- which is exactly what happened at first.
     if svc == "orders-db-proxy" and dt.hour == 2 and dt.minute < 40:
-        if rng.random() < 0.4:
+        if dt.minute == 0:
+            out.append(("info", "nightly reconciliation batch started (job=orders-reconcile)", {}))
+        for _ in range(rng.randint(8, 16)):
             out.append(("error", "FATAL: remaining connection slots are reserved for superuser connections", {}))
-        if rng.random() < 0.3:
+        for _ in range(rng.randint(4, 9)):
             out.append(("warn", f"pool exhausted conn=50/50 waiters={rng.randint(3,40)}", {}))
-        if dt.minute == 0 and rng.random() < 0.2:
-            out.append(("info", "nightly reconciliation batch started", {}))
+        if rng.random() < 0.3:
+            out.append(("error", f"query failed: timeout acquiring connection after {rng.randint(5,30)}s", {}))
+        if dt.minute == 39:
+            out.append(("info", "nightly reconciliation batch finished", {}))
 
     # 3. image-resizer: OOMKill crashloop starting 2 days ago, worsening
     if svc == "image-resizer" and age_days <= 2.0:

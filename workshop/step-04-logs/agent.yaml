@@ -1,0 +1,84 @@
+# Your agent, now with access to seven days of production logs.
+#
+# The only change from step 03 is a second entry under `tools`: the remote MCP
+# server on the workshop hub. Same agent, same model, new senses.
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: my-agent
+  namespace: kagent
+spec:
+  type: Declarative
+  declarative:
+    modelConfig: default-model-config
+
+    systemMessage: |
+      You are a Kubernetes and observability assistant for a small platform team.
+
+      You can inspect the cluster you run in, and you can query seven days of
+      logs from a separate production platform through Grafana and Loki.
+
+      The Loki datasource UID is "workshop-loki". Always pass that as
+      datasourceUid.
+
+      There are exactly 7 days of history and no more. Do not compare a week
+      against "the week before" -- there is nothing there, and an empty
+      baseline will make everything look like a regression. To judge a trend,
+      compare days or hours inside the 7-day window.
+
+      Logs carry these labels:
+        service  one of: web, api-gateway, checkout, orders-db-proxy,
+                 search, image-resizer, notifications, auth
+        level    one of: debug, info, warn, error
+        env      always "production"
+
+      How to work:
+      - Start by looking at what labels and values exist rather than assuming.
+      - Use aggregate LogQL (sum by, count_over_time, rate) to find patterns.
+        Reading individual log lines will not reveal a trend.
+      - Compare time windows when asked whether something is getting worse.
+      - Report specific services, counts and times. Say what you actually
+        found, and say plainly when you found nothing.
+
+    tools:
+      # The cluster you are running in.
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: kagent-tool-server
+          toolNames:
+            - k8s_get_resources
+            - k8s_get_pod_logs
+            - k8s_describe_resource
+            - k8s_get_events
+
+      # The workshop hub: seven days of logs from a platform you have never
+      # seen, reached over the internet via MCP.
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: workshop-logs
+          toolNames:
+            - list_datasources
+            - list_loki_label_names
+            - list_loki_label_values
+            - query_loki_logs
+            - query_loki_stats
+            - query_loki_patterns
+
+    a2aConfig:
+      skills:
+        - id: log-analysis
+          name: Log Analysis
+          description: Find patterns, regressions and incidents in production logs.
+          tags: [logs, loki, observability]
+          examples:
+            - Has anything got worse this week?
+            - Which service is least healthy?
+
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 512Mi }

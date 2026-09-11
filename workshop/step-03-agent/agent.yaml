@@ -1,0 +1,60 @@
+# Your first agent.
+#
+# This is the whole thing. An agent in kagent is a Kubernetes resource: a model
+# to think with, a system prompt telling it what it is for, and a set of tools
+# it is allowed to reach for. Nothing else.
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: my-agent
+  namespace: kagent
+spec:
+  type: Declarative
+  declarative:
+    # The ModelConfig you wired to relax.ai in step 02.
+    modelConfig: default-model-config
+
+    # The system prompt is where most of the value is. Be specific about what
+    # the agent is for and how you want it to answer -- vague prompts produce
+    # vague agents. This one is deliberately short so you can see the effect of
+    # changing it.
+    systemMessage: |
+      You are a Kubernetes operations assistant for a small platform team.
+
+      You have read-only tools for inspecting the cluster you run in. Use them
+      rather than guessing: if you are asked about the state of something, go
+      and look.
+
+      Answer briefly and concretely. Prefer specific names, counts and numbers
+      over general description. If you genuinely cannot determine something
+      with the tools you have, say so plainly rather than speculating.
+
+    # Tools come from MCP servers. kagent ships its own tool server with the
+    # Kubernetes tools below; in step 04 you will add a second, remote one.
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: kagent-tool-server
+          toolNames:
+            - k8s_get_resources
+            - k8s_get_pod_logs
+            - k8s_describe_resource
+            - k8s_get_events
+            - k8s_get_available_api_resources
+
+    a2aConfig:
+      skills:
+        - id: cluster-inspection
+          name: Cluster Inspection
+          description: Inspect and report on the state of this Kubernetes cluster.
+          tags: [kubernetes, operations]
+          examples:
+            - What is running in this cluster?
+            - Are any pods unhealthy?
+
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 256Mi }

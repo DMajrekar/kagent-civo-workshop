@@ -56,10 +56,21 @@ def c2():
     hits = one('sum(count_over_time({service="orders-db-proxy"} |= "remaining connection slots" [7d]))')
     if hits < 50:
         return False, f"only {hits:.0f} pool-exhaustion lines in 7 days"
-    # Confirm they cluster in the 02:00 hour rather than being spread out.
-    in_window = one('sum(count_over_time({service="orders-db-proxy"} |= "remaining connection slots" [40m]))',
-                    _last_0200() + 2400)
-    return True, f"{hits:.0f} lines over 7d, {in_window:.0f} in the most recent 02:00-02:40 window"
+
+    # Existing is not enough -- it has to be obvious. Compare errors inside the
+    # 02:00 window against a quiet hour. If the spike does not dominate, an
+    # agent aggregating by hour will correctly say it found nothing scheduled.
+    night = one('sum(count_over_time({service="orders-db-proxy", level="error"}[40m]))',
+                _last_0200() + 2400)
+    quiet = one('sum(count_over_time({service="orders-db-proxy", level="error"}[40m]))',
+                _last_0200() + 8 * 3600)
+    if night < 40:
+        return False, f"only {night:.0f} errors in the 02:00-02:40 window — too faint to spot"
+    if night < max(quiet, 1) * 5:
+        return False, (f"spike does not stand out: {night:.0f} errors at 02:00 vs "
+                       f"{quiet:.0f} in a quiet hour — needs to be at least 5x")
+    return True, (f"{hits:.0f} lines over 7d; {night:.0f} errors in the 02:00-02:40 window "
+                  f"vs {quiet:.0f} in a quiet hour ({night/max(quiet,1):.0f}x)")
 
 
 def _last_0200():
