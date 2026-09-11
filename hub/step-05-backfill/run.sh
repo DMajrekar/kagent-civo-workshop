@@ -20,6 +20,18 @@ DAYS="${BACKFILL_DAYS:-7}"
 
 banner "Hub — step 05: backfill and validate"
 
+  # Stop live generation before anything else -- including before the wipe.
+  # Both writers share the same streams, and Loki only accepts out-of-order
+  # entries within a window derived from max_chunk_age. A generator stamping
+  # "now" into a freshly emptied Loki makes the whole backfill too far behind.
+  if [[ -z "${VALIDATE_ONLY-}" ]] && kubectl -n "$NS" get deploy log-generator >/dev/null 2>&1; then
+    run "kubectl -n '$NS' scale deploy/log-generator --replicas=0"
+    wait_for "live generator to stop" 120 \
+      "[[ \$(kubectl -n '$NS' get pod -l app=log-generator --no-headers 2>/dev/null | wc -l) -eq 0 ]]"
+  elif [[ -z "${VALIDATE_ONLY-}" ]]; then
+    note "no live generator deployed yet — nothing to pause"
+  fi
+
 if [[ -n "${WIPE-}" ]]; then
   warn "WIPE=1 — deleting all existing log data"
   run "kubectl -n '$NS' scale statefulset loki --replicas=0"
@@ -31,19 +43,6 @@ if [[ -n "${WIPE-}" ]]; then
 fi
 
 if [[ -z "${VALIDATE_ONLY-}" ]]; then
-  # Stop live generation first. Both write to the same streams, and Loki only
-  # accepts out-of-order entries within a window derived from max_chunk_age --
-  # a live writer stamping "now" makes every backdated entry too far behind,
-  # and the entire backfill is rejected with a bare HTTP 400.
-  say "Pausing live generation so the backfill is not racing it."
-  if kubectl -n "$NS" get deploy log-generator >/dev/null 2>&1; then
-    run "kubectl -n '$NS' scale deploy/log-generator --replicas=0"
-    wait_for "live generator to stop" 120 \
-      "[[ \$(kubectl -n '$NS' get pod -l app=log-generator --no-headers 2>/dev/null | wc -l) -eq 0 ]]"
-  else
-    note "no live generator deployed yet — nothing to pause"
-  fi
-
   # Refresh the ConfigMap so the job runs what is in the repo right now.
   run "kubectl -n '$NS' create configmap log-generator \
     --from-file=generator.py='$REPO_ROOT/hub/step-04-workloads/generator.py' \

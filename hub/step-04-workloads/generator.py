@@ -197,6 +197,9 @@ def gen_window(rng, start_ts, end_ts, step, on_batch, batch_size=2000):
         on_batch(streams)
 
 
+REJECTED = {"batches": 0, "sample": ""}
+
+
 def push(streams, retries=5):
     payload = {"streams": [
         {"stream": {"service": svc, "level": lvl, "env": "production", **dict(extra)},
@@ -216,7 +219,10 @@ def push(streams, retries=5):
             if e.code == 400:
                 # Not retriable, and always structural: an out-of-order entry,
                 # a stream limit, or a malformed label. Say which.
-                print(f"push rejected (400): {detail}", file=sys.stderr)
+                REJECTED["batches"] += 1
+                if not REJECTED["sample"]:
+                    REJECTED["sample"] = detail
+                    print(f"push rejected (400): {detail}", file=sys.stderr)
                 return 0
             if attempt == retries - 1:
                 print(f"push failed after {retries} attempts: {e}: {detail}", file=sys.stderr)
@@ -256,6 +262,15 @@ def main():
                 print(f"  pushed {total:,} lines", flush=True)
         gen_window(rng, start, end, args.step, on_batch)
         print(f"\n  backfilled {total:,} lines over {args.days} days in {time.time()-t0:.0f}s")
+        if REJECTED["batches"]:
+            # Exit non-zero so the Job fails and hub-05 stops, rather than
+            # handing a dataset with holes to a validator that may not notice.
+            print(f"\n  {REJECTED['batches']} batch(es) were REJECTED — this dataset has holes.",
+                  file=sys.stderr)
+            print(f"  first rejection: {REJECTED['sample']}", file=sys.stderr)
+            print("  most likely something else was writing to the same streams.",
+                  file=sys.stderr)
+            sys.exit(1)
         return
 
     if args.live:
