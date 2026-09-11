@@ -11,6 +11,17 @@
 
 set -euo pipefail
 
+# Colour names are short and generic, which means they can silently clobber a
+# variable the caller set on the command line. RESET in particular reads like a
+# perfectly good flag name. Warn rather than swallow it.
+for _c in BOLD DIM RESET RED GREEN YELLOW BLUE CYAN; do
+  if [[ -n "${!_c-}" ]]; then
+    printf 'lib.sh: ignoring inherited $%s — it is a colour variable here.\n' "$_c" >&2
+    printf '        If you meant a control flag, it needs a different name.\n' >&2
+  fi
+done
+unset _c
+
 if [[ -t 1 ]]; then
   BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
   RED=$'\033[31m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'

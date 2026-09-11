@@ -53,8 +53,12 @@ loki:
   # That is fine in production and useless for a workshop where we re-seed the
   # dataset on the morning of the event and need it queryable immediately.
   ingester:
+    # chunk_idle_period drives how fast a *quiet* stream flushes, which is what
+    # makes backfilled data queryable quickly. max_chunk_age must NOT be shrunk
+    # to match: Loki derives its out-of-order acceptance window from it, so a
+    # small value rejects backdated writes outright with a bare HTTP 400.
     chunk_idle_period: 1m
-    max_chunk_age: 5m
+    max_chunk_age: 2h
   querier:
     max_concurrent: 8
     query_ingesters_within: 336h   # cover the whole backfill window
