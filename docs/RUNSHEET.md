@@ -1,15 +1,16 @@
 # Run sheet — 60 minutes
 
-Event: **2026-09-26**. Format: live screenshare, attendees follow along on their
+Event: **Tuesday 22 September 2026**. Format: live screenshare, attendees follow along on their
 own laptops against their own Civo clusters.
 
 Sixty minutes is tight for eight things going wrong at once. The plan below
 assumes **pre-work is genuinely done**. If it isn't, you lose the first twenty
 minutes to installing `kubectl` and the workshop does not finish.
 
-## Pre-work (sent 3 days ahead, ~10 min for the attendee)
+## Pre-work (email Friday 18 Sep, ~10 min for the attendee)
 
-Email the repo link with exactly three instructions:
+Sending on the Friday gives people the weekend, which is worth more than a
+longer lead time midweek. Repo link plus exactly three instructions:
 
 1. `git clone … && cd kagent-workshop`
 2. `cp .env.example .env` and paste in the Civo key from their own account
@@ -39,7 +40,7 @@ There is no slack in this. Decide **in advance** what you drop:
 
 - **First cut:** step-06 entirely — it becomes "read docs/AFTER.md at home".
   Safe now: attendees have their own relax.ai keys and the hub stays up until
-  **2026-10-26**, so nothing breaks when they walk out. This is your real
+  **2026-10-22**, so nothing breaks when they walk out. This is your real
   buffer; spend it on step-04 if the room is engaged.
 - **Second cut:** step-05 shows a pre-created CronJob's output rather than
   having them apply it (saves 6 min).
@@ -48,13 +49,13 @@ There is no slack in this. Decide **in advance** what you drop:
 ## The takeaway is a running cluster
 
 Attendees keep their clusters, their own relax.ai key, and hub access until
-**2026-10-26**. So the takeaway genuinely works — but two things still need
+**2026-10-22**. So the takeaway genuinely works — but two things still need
 saying out loud, not left in a README:
 
 1. **It bills to their account.** Say the number. Someone finding an unexpected
    Civo charge next month is the one outcome that turns a good workshop into a
    complaint.
-2. **The hub goes away on 2026-10-26.** Put the date on the slide and in
+2. **The hub goes away on 2026-10-22.** Put the date on the slide and in
    docs/AFTER.md. A month is long enough that they will have forgotten, so the
    date needs to be somewhere they'll find it later — which is why step-06
    exists even though it's now the first thing you cut.

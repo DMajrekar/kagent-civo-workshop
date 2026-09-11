@@ -9,10 +9,10 @@ Your agent depends on one thing you don't own: the workshop hub.
 
 | Dependency | Lifetime | What happens when it ends |
 |------------|----------|---------------------------|
-| The hub's MCP endpoint | **until 2026-10-26** | Agent loses its log tools. It still answers and can still see your own cluster, but the seven-days-of-logs trick stops working. |
+| The hub's MCP endpoint | **until 2026-10-22** | Agent loses its log tools. It still answers and can still see your own cluster, but the seven-days-of-logs trick stops working. |
 | Your relax.ai key | Yours — check with relax.ai for quota | Nothing, unless you exhaust the quota |
 
-So nothing breaks the day after the workshop. But put **2026-10-26** in your
+So nothing breaks the day after the workshop. But put **2026-10-22** in your
 calendar now, because in a month you will not remember why your agent suddenly
 got less useful.
 
@@ -49,7 +49,7 @@ make step-06            # deploys Loki + mcp-grafana + the log generators
 This deploys the same stack the hub ran, sized for one cluster, and repoints
 your `RemoteMCPServer` at `http://mcp-grafana.observability:8000/mcp` instead
 of the hub. Same tools, same agent, no external dependency — and it keeps
-working after 2026-10-26.
+working after 2026-10-22.
 
 If you'd rather point it at logs you actually care about, swap the Loki URL in
 the `mcp-grafana` Deployment for your own Grafana or Loki — the agent doesn't

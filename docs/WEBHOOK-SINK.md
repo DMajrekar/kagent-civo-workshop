@@ -78,7 +78,7 @@ room full of people who have just been taught to automate things. Non-optional:
   the step-05 narration, because someone will ask.
 - Cap total codes (a few hundred) so a loop cannot exhaust the disk.
 - Cap deliveries per code so a runaway CronJob over a month can't fill the PVC.
-- Everything goes away with the hub on 2026-10-26.
+- Everything goes away with the hub on 2026-10-22.
 
 ## It lives for a month
 
