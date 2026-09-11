@@ -18,9 +18,9 @@ Ordered by risk, not by how the workshop reads.
       spares and no-shows, quota per key, whether keys persist after the event,
       and delivery format. **Needed by Thursday 17 Sep** to make cards on the
       Friday.
-- [ ] **Raise the Civo cluster-quota ticket today**, same reasoning. Default
-      account limits bite around 10 concurrent clusters; you need ~25 plus
-      three hot spares, all in LON1.
+- [ ] **Civo cluster quota.** Confirmed sufficient for the hub plus testing.
+      Still needs raising before the event: ~25 attendee clusters plus three
+      hot spares in LON1, and default limits bite around 10. Lead-time item.
 
 ## Weekend 12–13 Sep — optional but high value
 
@@ -78,9 +78,8 @@ consequences for how you build it:
       sslip.io so no DNS setup is needed; set `HUB_DOMAIN` to use your own
       domain, which reads better on a card. Also retires the two bare
       LoadBalancers, taking the hub from three to one.
-- [ ] Cert-expiry incident (#5) does not surface from the open "about to break"
-      question — the agent reaches for the OOM crashloop, which is a defensible
-      answer. Either make #5 louder or use the direct prompt.
+- [x] Cert-expiry incident (#5) — resolved. Signal raised, and the prompt that
+      reaches it is in docs/DEMO-PROMPTS.md.
 - [ ] Time each step properly against RUNSHEET.md.
 
 ## Fri 18 Sep — rehearsal
@@ -92,7 +91,8 @@ consequences for how you build it:
 - [ ] Second run on a deliberately broken laptop (no helm, stale kubectl) to
       confirm `make doctor` catches it with a usable message
 - [ ] Load test: 25 concurrent agents against the MCP endpoint. Most likely
-      live failure, cheapest to prevent.
+      live failure, cheapest to prevent. Note answers take 30-80s each, so the
+      concurrency window is wider than it looks.
 - [ ] Confirm the wall view renders a hostile payload
       (`<img src=x onerror=alert(1)>`) as inert text
 - [ ] Workshop cards: cluster naming convention, their relax.ai key, their MCP
