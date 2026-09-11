@@ -1,0 +1,66 @@
+# A scaffold to make your own.
+#
+# Copy this, change the name, and edit the two things that actually matter:
+# the system prompt, and which tools it can reach for. Apply it with
+#   kubectl apply -f my-agent.yaml
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: my-second-agent          # <- rename me
+  namespace: kagent
+spec:
+  type: Declarative
+  declarative:
+    modelConfig: default-model-config
+
+    # Most of an agent's quality lives here. Be concrete about what it is for,
+    # what "bad" looks like in YOUR systems, and how you want it to answer.
+    # Vague prompts produce vague agents.
+    systemMessage: |
+      You are <what this agent is for>.
+
+      <What it should pay attention to. Name your services, your thresholds,
+      what normal looks like. The agent has no idea unless you tell it.>
+
+      Answer briefly and concretely. Use the tools rather than guessing, and
+      say plainly when you cannot determine something.
+
+    tools:
+      # Tools come from MCP servers. These two already exist in your cluster;
+      # `kubectl -n kagent get remotemcpservers` lists them, and the status of
+      # each shows every tool it discovered.
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: kagent-tool-server
+          toolNames:
+            - k8s_get_resources
+            - k8s_get_pod_logs
+            - k8s_describe_resource
+            - k8s_get_events
+
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: workshop-logs
+          toolNames:
+            - list_loki_label_names
+            - list_loki_label_values
+            - query_loki_logs
+            - query_loki_stats
+
+    a2aConfig:
+      skills:
+        - id: my-skill
+          name: My Skill
+          description: <what it does>
+          tags: [example]
+          examples:
+            - <a question someone would actually ask it>
+
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 512Mi }

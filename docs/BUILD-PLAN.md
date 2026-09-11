@@ -29,21 +29,21 @@ logs behind the backfill. If you have the hour, do `hub-01` … `hub-05`.
 
 ## Mon 14 – Tue 15 Sep — the hub
 
-- [ ] `hub-01` Civo cluster, firewall, DNS record for the MCP endpoint
-- [ ] `hub-02` Loki (single binary, persistent volume) + Alloy
+- [x] `hub-01` Civo cluster, firewall, DNS record for the MCP endpoint
+- [x] `hub-02` Loki (single binary, persistent volume) + Alloy
       — `limits_config` tuned: `reject_old_samples: false` for backfill,
         `max_query_length`, `max_entries_limit_per_query` to survive 25 agents
       — `retention_period` and a PVC sized for seven seeded days plus five
         weeks of live generation (the hub runs until 22 Oct)
-- [ ] `hub-03` Grafana + Loki datasource (also your own debugging window)
-- [ ] `hub-04` the misbehaving-app fleet (see INCIDENTS.md)
-- [ ] `hub-05` backfill job — writes 7 days of history with past timestamps
-- [ ] `hub-06` mcp-grafana + bearer-auth proxy + cert-manager/TLS
+- [x] `hub-03` Grafana + Loki datasource (also your own debugging window)
+- [x] `hub-04` the misbehaving-app fleet (see INCIDENTS.md)
+- [x] `hub-05` backfill job — writes 7 days of history with past timestamps
+- [x] `hub-06` mcp-grafana + bearer-auth proxy + cert-manager/TLS
       — **per-attendee MCP tokens**, not one shared token. You're already
         printing a per-person relax.ai key on the card, so a second string
         costs nothing — and it's the difference between revoking one abusive
         token and breaking the endpoint for everyone for three more weeks.
-- [ ] `hub-07` webhook sink + wall view (see WEBHOOK-SINK.md)
+- [x] `hub-07` webhook sink + wall view (see WEBHOOK-SINK.md)
 
 Backfill is the guarantee; live traffic is the garnish. Because backfill
 covers the full seven days, a late hub is survivable — but a hub that isn't up
@@ -62,14 +62,24 @@ consequences for how you build it:
 
 ## Wed 16 – Thu 17 Sep — the attendee path
 
-- [ ] step-01 … step-06 scripts, each idempotent and re-runnable
-- [ ] **Model bake-off against real data** (see below) — pick `RELAX_MODEL`
-- [ ] Portable log stack: Loki + mcp-grafana + generators, sized for one
+- [x] step-01 … step-06 scripts, each idempotent and re-runnable
+- [x] **Model bake-off** — DeepSeek-V4-Pro. See docs/DEMO-PROMPTS.md.
+- [x] Portable log stack: Loki + mcp-grafana + generators, sized for one
       cluster. **Build this once, it does two jobs** — the WiFi fallback for
       step-04, and the take-home in step-06 that frees their cluster from the
       hub.
 - [ ] **Thu 17: relax.ai keys must be in hand.** If they've not arrived,
       escalate Thursday morning, not Friday afternoon.
+
+## Still open before the rehearsal
+
+- [ ] **TLS on both public endpoints.** The MCP endpoint and the wall are both
+      plain HTTP; bearer tokens cross the internet in clear text. Needs a DNS
+      name plus cert-manager.
+- [ ] Cert-expiry incident (#5) does not surface from the open "about to break"
+      question — the agent reaches for the OOM crashloop, which is a defensible
+      answer. Either make #5 louder or use the direct prompt.
+- [ ] Time each step properly against RUNSHEET.md.
 
 ## Fri 18 Sep — rehearsal
 
