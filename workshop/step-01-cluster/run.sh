@@ -30,7 +30,6 @@ civo apikey current workshop >/dev/null 2>&1 || true
 if civo_cluster_exists "$NAME" "$REGION"; then
   ok "cluster '$NAME' already exists — reusing it"
 else
-  pause "create your cluster"
   run "civo kubernetes create '$NAME' \
     --region '$REGION' --size '$SIZE' --nodes '$NODES' --version '$K8S' \
     --applications '-traefik2-nodeport,metrics-server' \

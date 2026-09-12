@@ -28,7 +28,6 @@ say ""
 say "That answer came from your cluster, via a model running on relax.ai."
 say "Nothing was hard-coded. Now write your own agent."
 
-pause "look at the agent definition"
 run "cat '$HERE/agent.yaml'"
 
 say ""

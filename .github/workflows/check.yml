@@ -60,6 +60,28 @@ jobs:
           done
           exit $fail
 
+      - name: No double enter-prompts
+        run: |
+          python3 - <<'PY'
+          import glob, re, sys
+          bad = []
+          for f in sorted(glob.glob('**/run.sh', recursive=True)):
+              lines = open(f).read().split('\n')
+              for i, l in enumerate(lines):
+                  if not re.match(r'\s*pause\b', l):
+                      continue
+                  j = i + 1
+                  while j < len(lines) and (not lines[j].strip() or lines[j].strip().startswith('#')):
+                      j += 1
+                  nxt = lines[j].strip() if j < len(lines) else ''
+                  if nxt.startswith(('run ', 'run_quiet ')):
+                      bad.append((f, i + 1))
+          for f, n in bad:
+              print(f"::error file={f},line={n}::pause directly before run/run_quiet "
+                    f"makes the presenter press enter twice; run already pauses")
+          sys.exit(1 if bad else 0)
+          PY
+
       - name: No credentials committed
         run: |
           if git grep -nE 'rak_[A-Za-z0-9]{20,}|glsa_[A-Za-z0-9_]{20,}|BEGIN [A-Z ]*PRIVATE KEY' \

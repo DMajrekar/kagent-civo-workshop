@@ -30,7 +30,6 @@ civo apikey current workshop >/dev/null 2>&1 || true
 if civo_cluster_exists "$HUB_NAME" "$HUB_REGION"; then
   ok "cluster $HUB_NAME already exists — reusing it"
 else
-  pause "create the cluster"
   run "civo kubernetes create '$HUB_NAME' \
     --region '$HUB_REGION' \
     --size '$HUB_SIZE' \

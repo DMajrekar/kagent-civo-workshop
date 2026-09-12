@@ -101,7 +101,12 @@ pause() {
   printf '\n'
 }
 
-# run "<command>" -- show it, wait, execute it, report.
+# run "<command>" -- show it, wait for enter, execute it, report.
+#
+# NOTE: run and run_quiet ALREADY pause. Never put a bare `pause` immediately
+# before one, or the presenter has to press enter twice for a single action.
+# Use `pause` only where nothing is about to be run -- to hold on a point, or
+# to confirm something done outside the script.
 # The command is displayed exactly as the attendee would type it, which is the
 # whole point: they are reading along and copying from their own repo.
 run() {
