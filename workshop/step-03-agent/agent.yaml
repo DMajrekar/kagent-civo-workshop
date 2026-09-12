@@ -1,23 +1,24 @@
 # Your first agent.
 #
-# This is the whole thing. An agent in kagent is a Kubernetes resource: a model
-# to think with, a system prompt telling it what it is for, and a set of tools
-# it is allowed to reach for. Nothing else.
+# An agent in kagent is a Kubernetes resource: a model to think with, a prompt
+# saying what it is for, and the tools it is allowed to reach for. That's it.
+#
+# This one only knows about the cluster it runs in. In step 04 you'll build a
+# second one that can see a great deal more.
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: my-agent
+  name: cluster-scout
   namespace: kagent
 spec:
   type: Declarative
   declarative:
-    # The ModelConfig you wired to relax.ai in step 02.
+    # The ModelConfig the chart created from values.yaml in step 02.
     modelConfig: default-model-config
 
-    # The system prompt is where most of the value is. Be specific about what
-    # the agent is for and how you want it to answer -- vague prompts produce
-    # vague agents. This one is deliberately short so you can see the effect of
-    # changing it.
+    # Most of an agent's quality lives here. Be specific about what it is for
+    # and how you want it to answer — vague prompts make vague agents. This one
+    # is deliberately short so you can see what changing it does.
     systemMessage: |
       You are a Kubernetes operations assistant for a small platform team.
 
@@ -29,8 +30,8 @@ spec:
       over general description. If you genuinely cannot determine something
       with the tools you have, say so plainly rather than speculating.
 
-    # Tools come from MCP servers. kagent ships its own tool server with the
-    # Kubernetes tools below; in step 04 you will add a second, remote one.
+    # Tools come from MCP servers. kagent ships its own with the Kubernetes
+    # tools below; in step 04 you'll add a second, remote one.
     tools:
       - type: McpServer
         mcpServer:

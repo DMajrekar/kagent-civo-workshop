@@ -1,12 +1,16 @@
 # A scaffold to make your own.
 #
-# Copy this, change the name, and edit the two things that actually matter:
-# the system prompt, and which tools it can reach for. Apply it with
+# You already have two: cluster-scout, which can see this cluster, and
+# log-detective, which can also see the log platform. Agents are cheap — a
+# third that does one job well is usually better than widening either.
+#
+# Copy this, rename it, and edit the two things that matter: the system prompt
+# and the tool list.
 #   kubectl apply -f my-agent.yaml
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: my-second-agent          # <- rename me
+  name: rename-me               # lowercase and hyphens; it becomes a Service
   namespace: kagent
 spec:
   type: Declarative

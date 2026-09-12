@@ -1,11 +1,12 @@
-# Your agent, now with access to seven days of production logs.
+# A second agent, with access to seven days of production logs.
 #
-# The only change from step 03 is a second entry under `tools`: the remote MCP
-# server on the workshop hub. Same agent, same model, new senses.
+# cluster-scout from step 03 stays exactly as it was — agents are cheap, and
+# two narrow ones beat one that does everything. The difference here is the
+# second entry under `tools`: the remote MCP server on the workshop hub.
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: my-agent
+  name: log-detective
   namespace: kagent
 spec:
   type: Declarative

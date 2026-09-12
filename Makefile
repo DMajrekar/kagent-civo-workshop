@@ -42,12 +42,23 @@ help:
 	@printf '    \033[32mmake rehearse\033[0m    run every step with no pauses (testing)\n'
 	@printf '    \033[32mmake clean\033[0m       delete your workshop cluster\n\n'
 
-.PHONY: help doctor all rehearse clean hub-all
+.PHONY: help doctor all rehearse clean hub-all ui ui-stop ui-status
 
 # -------------------------------------------------------------------- checks
 
 doctor:
 	@scripts/doctor.sh
+
+# The kagent dashboard. Stays open after the command returns, so it is usable
+# for the rest of the session rather than only inside one step.
+ui:
+	@scripts/ui.sh start
+
+ui-stop:
+	@scripts/ui.sh stop
+
+ui-status:
+	@scripts/ui.sh status
 
 # --------------------------------------------------------------- dynamic steps
 #

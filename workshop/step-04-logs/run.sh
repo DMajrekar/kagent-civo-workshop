@@ -76,26 +76,30 @@ say "kagent has connected and discovered what the server offers:"
 run "kubectl -n kagent get remotemcpserver workshop-logs -o jsonpath='{.status.discoveredTools[*].name}' | tr ' ' '\n'"
 
 say ""
-say "Now give the agent those tools. This is the same agent as step 03 with one"
-say "extra block under tools -- and a system prompt that tells it how to use them."
-run "diff -u '$REPO_ROOT/workshop/step-03-agent/agent.yaml' '$HERE/agent.yaml' | head -60 || true"
+say "Now a second agent that can use them. cluster-scout stays as it is --"
+say "agents are cheap, and two narrow ones beat one that does everything."
+say ""
+say "The difference is one extra block under tools, and a prompt that explains"
+say "what it is looking at:"
+run "diff -u '$REPO_ROOT/workshop/step-03-agent/agent.yaml' '$HERE/agent.yaml' | head -70 || true"
 
 run "kubectl apply -f '$HERE/agent.yaml'"
-run "kubectl -n kagent rollout status deploy/my-agent --timeout=180s"
-wait_for "my-agent to be ready" 300 \
-  "[[ \"\$(kubectl -n kagent get agent my-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
+run "kubectl -n kagent rollout status deploy/log-detective --timeout=180s"
+wait_for "log-detective to be ready" 300 \
+  "[[ \"\$(kubectl -n kagent get agent log-detective -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 
-trap cleanup_port_forwards EXIT
-port_forward kagent svc/my-agent 8081:8080
-wait_for "your agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
+run "bash '$REPO_ROOT/scripts/ui.sh' start"
+UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"
+wait_for "log-detective to appear in the dashboard" 120 \
+  "curl -sf -o /dev/null '$UI/log-detective/.well-known/agent-card.json'"
 
 say ""
 say "Start with something simple, to prove it can see the data at all."
-run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8081 \
+run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/log-detective' \
   'Which services are sending logs to the workshop-loki datasource? Just list them.'"
 
 printf '\n'
-ok "Your agent can now read seven days of production logs."
+ok "log-detective can read seven days of production logs."
 say ""
 say "Everything from here is a question. Try these, one at a time:"
 printf '\n'
@@ -106,6 +110,7 @@ note "'Where is our log volume going?'"
 note "'Is anything about to break that has not broken yet?'"
 printf '\n'
 say "Ask them with:"
-note "python3 scripts/ask-agent.py http://127.0.0.1:8081 'your question'"
-note "(or use the UI: kubectl -n kagent port-forward svc/kagent-ui 8080:8080)"
+note "In the dashboard at http://localhost:${UI_PORT:-8082} — pick log-detective"
+note "or from here:  python3 scripts/ask-agent.py \\"
+note "                  http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent/log-detective 'your question'"
 note "next:  make step-05   (a report every morning)"

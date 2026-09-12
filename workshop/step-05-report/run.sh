@@ -49,7 +49,7 @@ spec:
           image: ${IMAGE}
           command: ["python3", "/app/report.py"]
           env:
-            - { name: AGENT_URL, value: "http://my-agent.kagent.svc.cluster.local:8080" }
+            - { name: AGENT_URL, value: "http://log-detective.kagent.svc.cluster.local:8080" }
             - { name: REPORT_WEBHOOK_URL, value: "${HOOK}" }
             - { name: PYTHONUNBUFFERED, value: "1" }
           volumeMounts: [{ name: app, mountPath: /app }]
@@ -113,7 +113,7 @@ spec:
               image: ${IMAGE}
               command: ["python3", "/app/report.py"]
               env:
-                - { name: AGENT_URL, value: "http://my-agent.kagent.svc.cluster.local:8080" }
+                - { name: AGENT_URL, value: "http://log-detective.kagent.svc.cluster.local:8080" }
                 - { name: REPORT_WEBHOOK_URL, value: "${HOOK}" }
                 - { name: PYTHONUNBUFFERED, value: "1" }
               volumeMounts: [{ name: app, mountPath: /app }]

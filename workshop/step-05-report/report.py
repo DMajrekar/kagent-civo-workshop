@@ -7,7 +7,7 @@ prints the report instead, so the job is still useful on its own.
 """
 import json, os, sys, time, urllib.error, urllib.request, uuid
 
-AGENT = os.environ.get("AGENT_URL", "http://my-agent.kagent.svc.cluster.local:8080")
+AGENT = os.environ.get("AGENT_URL", "http://log-detective.kagent.svc.cluster.local:8080")
 HOOK = os.environ.get("REPORT_WEBHOOK_URL", "").strip()
 TIMEOUT = int(os.environ.get("TIMEOUT", "600"))
 PROMPT = os.environ.get("PROMPT") or (

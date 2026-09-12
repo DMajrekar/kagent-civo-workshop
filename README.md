@@ -38,7 +38,7 @@ own Civo key) and you're ready.
 make            # see every step
 make step-01    # create your Civo cluster
 make step-02    # install kagent, point it at relax.ai
-make step-03    # your first agent
+make step-03    # your first agent, and the dashboard
 make step-04    # give it seven days of logs over MCP
 make step-05    # a CronJob that reports every morning
 make step-06    # cut the cord — your own key, your own logs

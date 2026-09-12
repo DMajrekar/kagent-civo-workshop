@@ -17,11 +17,15 @@ wait_for "the built-in k8s-agent to be ready" 300 \
   "[[ \"\$(kubectl -n kagent get agent k8s-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 
 # Port-forward for the rest of the step.
-trap cleanup_port_forwards EXIT
-port_forward kagent svc/k8s-agent 8080:8080
-wait_for "the agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8080/.well-known/agent-card.json"
+# The dashboard is the one port-forward for the whole session. It proxies A2A
+# for every agent at /api/a2a/<namespace>/<name>, so nothing here needs a
+# forward of its own.
+run "bash '$REPO_ROOT/scripts/ui.sh' start"
+UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"
+wait_for "the dashboard to answer for k8s-agent" 120 \
+  "curl -sf -o /dev/null '$UI/k8s-agent/.well-known/agent-card.json'"
 
-run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8080 \
+run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/k8s-agent' \
   'How many pods are running in the kagent namespace, and are any of them unhealthy?'"
 
 say ""
@@ -34,21 +38,27 @@ say ""
 say "Three things: which model, what it is for, and which tools it may use."
 run "kubectl apply -f '$HERE/agent.yaml'"
 
-wait_for "my-agent to be ready" 300 \
-  "[[ \"\$(kubectl -n kagent get agent my-agent -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
+wait_for "cluster-scout to be ready" 300 \
+  "[[ \"\$(kubectl -n kagent get agent cluster-scout -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 run "kubectl -n kagent get agents"
 
-port_forward kagent svc/my-agent 8081:8080
-wait_for "your agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
+wait_for "cluster-scout to appear in the dashboard" 120 \
+  "curl -sf -o /dev/null '$UI/cluster-scout/.well-known/agent-card.json'"
 
-run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8081 \
+run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/cluster-scout' \
   'What namespaces exist in this cluster, and what is running in each?'"
+
+say ""
+say "Everything above went through the dashboard, which is also how you use it."
+say "Open it, pick cluster-scout, and ask it something yourself. It stays up for"
+say "the rest of the session, and every agent you build shows up in it."
 
 printf '\n'
 ok "You have an agent of your own."
 say ""
-say "It can only see this cluster. In step 04 you give it seven days of logs"
-say "from a fleet of applications it has never met."
-note "edit $HERE/agent.yaml and re-run 'make step-03' to change its behaviour"
-note "the kagent UI:  kubectl -n kagent port-forward svc/kagent-ui 8080:8080"
+say "cluster-scout can only see this cluster. In step 04 you build a second"
+say "agent that can also see seven days of logs from a platform it has never"
+say "met — and you will have both, side by side, in the dashboard."
+note "edit $HERE/agent.yaml and re-run 'make step-03' to change how it behaves"
+note "dashboard: http://localhost:${UI_PORT:-8082}   (make ui / make ui-stop)"
 note "next:  make step-04"

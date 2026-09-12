@@ -132,7 +132,8 @@ of effort:
 4. **Give it write access, behind approval.** kagent can act on the cluster,
    not just read it. Start with something reversible and keep a human in the
    loop.
-5. **Run more than one agent.** A triage agent that routes to specialists
-   works better than one agent that knows everything.
+5. **Run more than one agent.** You already do — `cluster-scout` and
+   `log-detective` are deliberately separate. A triage agent that routes to
+   specialists works better than one agent that knows everything.
 
 `workshop/step-06-extend/my-agent.yaml` is a commented scaffold to start from.

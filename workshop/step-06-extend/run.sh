@@ -218,16 +218,17 @@ wait_for "kagent to rediscover the tools locally" 300 \
   "[[ \"\$(kubectl -n kagent get remotemcpserver workshop-logs -o jsonpath='{.status.conditions[?(@.type==\"Accepted\")].status}' 2>/dev/null)\" == 'True' ]]"
 run "kubectl -n kagent get remotemcpserver workshop-logs -o jsonpath='{.status.discoveredTools[*].name}' | tr ' ' '\n'"
 
-run "kubectl -n kagent rollout restart deploy/my-agent"
-run "kubectl -n kagent rollout status deploy/my-agent --timeout=300s"
+run "kubectl -n kagent rollout restart deploy/log-detective"
+run "kubectl -n kagent rollout status deploy/log-detective --timeout=300s"
 
-trap cleanup_port_forwards EXIT
-port_forward kagent svc/my-agent 8081:8080
-wait_for "your agent to answer" 120 "curl -sf -o /dev/null http://127.0.0.1:8081/.well-known/agent-card.json"
+run "bash '$REPO_ROOT/scripts/ui.sh' start"
+UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"
+wait_for "log-detective to answer" 120 \
+  "curl -sf -o /dev/null '$UI/log-detective/.well-known/agent-card.json'"
 
 say ""
 say "Same question as step 04. Nothing outside your cluster is involved now."
-run "python3 '$REPO_ROOT/scripts/ask-agent.py' http://127.0.0.1:8081 \
+run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/log-detective' \
   'Which services are sending logs, and how many errors were there in the last 24 hours?'"
 
 printf '\n'
@@ -237,7 +238,7 @@ say "One thing left, and it is not automated on purpose: the relax.ai key."
 note "The key on your card is yours, but if you want to swap it:"
 note "  kubectl -n kagent create secret generic kagent-relax \\"
 note "    --from-literal=RELAX_API_KEY=<your-key> --dry-run=client -o yaml | kubectl apply -f -"
-note "  kubectl -n kagent rollout restart deploy/my-agent"
+note "  kubectl -n kagent rollout restart deploy/log-detective"
 printf '\n'
 say "Where to take it next:"
 note "$HERE/my-agent.yaml — a commented scaffold for your own agent"
