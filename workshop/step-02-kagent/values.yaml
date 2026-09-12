@@ -4,8 +4,9 @@
 # relax.ai speaks the OpenAI API, so kagent talks to it as an OpenAI provider
 # with a different address.
 #
-# make step-02 overrides `model` and `config.baseUrl` from your .env if you
-# changed them there; everything else comes from this file.
+# This file is the source of truth. If RELAX_MODEL or RELAX_BASE_URL in your
+# .env differ from what is set here, step-02 overrides just those two and says
+# so on screen — otherwise it installs from this file alone.
 
 providers:
   default: openAI

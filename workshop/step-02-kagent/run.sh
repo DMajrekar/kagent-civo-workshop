@@ -59,11 +59,18 @@ else
   fail "could not create the relax.ai secret"; exit 1
 fi
 
+# values.yaml is the source of truth. Only override it when .env actually asks
+# for something different -- passing --set for values the file already declares
+# means two places to change and one of them silently losing.
+FILE_MODEL=$(python3 -c "import yaml,sys;print(yaml.safe_load(open(sys.argv[1]))['providers']['openAI']['model'])" "$HERE/values.yaml")
+FILE_URL=$(python3 -c "import yaml,sys;print(yaml.safe_load(open(sys.argv[1]))['providers']['openAI']['config']['baseUrl'])" "$HERE/values.yaml")
+OVERRIDE=""
+[[ "$MODEL"    != "$FILE_MODEL" ]] && { OVERRIDE+=" --set providers.openAI.model=$MODEL"; note "overriding model from .env: $FILE_MODEL -> $MODEL"; }
+[[ "$BASE_URL" != "$FILE_URL"   ]] && { OVERRIDE+=" --set providers.openAI.config.baseUrl=$BASE_URL"; note "overriding baseUrl from .env: $FILE_URL -> $BASE_URL"; }
+
 run "helm upgrade --install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
   --namespace kagent --create-namespace --wait --timeout 10m \
-  --values '$HERE/values.yaml' \
-  --set providers.openAI.model='$MODEL' \
-  --set providers.openAI.config.baseUrl='$BASE_URL' \
+  --values '$HERE/values.yaml'$OVERRIDE \
   ${KAGENT_VERSION:+--version $KAGENT_VERSION}"
 
 wait_for "the kagent controller to be ready" 600 \
