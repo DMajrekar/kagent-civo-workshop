@@ -35,7 +35,7 @@ of session time.
 | 00:11 | `make step-02` | kagent install + relax.ai ModelConfig | Blocks on cluster ready; stragglers catch up here |
 | 00:18 | `make step-03` | First agent + dashboard port-forward | First visual payoff. They ask it a question about their own cluster. |
 | 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
-| 00:40 | `make step-05` | Daily error-report CronJob | Trigger it manually so they see output immediately |
+| 00:40 | `make step-05` | Run the report, read it together | Runs once and stops for you to talk. The CronJob is shown, not applied. |
 | 00:50 | `make step-06` | Cut the cord: own key, own Loki | They leave with a cluster that still works tomorrow |
 | 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |
 
@@ -74,8 +74,8 @@ There is no slack in this. Decide **in advance** what you drop:
   Safe now: attendees have their own relax.ai keys and the hub stays up until
   **2026-10-22**, so nothing breaks when they walk out. This is your real
   buffer; spend it on step-04 if the room is engaged.
-- **Second cut:** step-05 shows a pre-created CronJob's output rather than
-  having them apply it (saves 6 min).
+- **Second cut:** step-05 already stops after the one-off run; if you are
+  short, skip reading the CronJob YAML and just say it is in the repo.
 - **Never cut:** step-04. It is the entire point of the workshop.
 
 ## The takeaway is a running cluster

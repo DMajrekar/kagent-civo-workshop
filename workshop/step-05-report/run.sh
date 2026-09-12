@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# title: A report in your inbox every morning
+# title: Put it on a schedule
+#
+# Flow: run the report once and look at what it wrote, then show what running
+# it every morning would take. The CronJob is displayed, not applied -- nobody
+# needs a scheduled job firing while we are still talking about it.
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 
 STATE="$REPO_ROOT/.state"
@@ -10,21 +14,79 @@ IMAGE="${REPORT_IMAGE:-python:3.12-alpine}"
 SCHEDULE="${REPORT_SCHEDULE:-0 7 * * *}"
 HOOK="${REPORT_WEBHOOK_URL:-}"
 
-banner "Step 05 — a report every morning"
+banner "Step 05 — put it on a schedule"
 
 if [[ -z "$HOOK" ]]; then
   SINK="$(cat "$STATE/sink-endpoint" 2>/dev/null || true)"
   warn "REPORT_WEBHOOK_URL is not set in your .env"
-  [[ -n "$SINK" ]] && note "open $SINK , get your code, and paste the URL into .env"
-  note "carrying on without it — the report will print to the job's logs instead"
+  [[ -n "$SINK" ]] && note "grab your code at $SINK and paste the URL into .env"
+  note "carrying on — the report will print here instead of posting"
 fi
 
-say "An agent you have to remember to ask is an agent you stop using. This is"
-say "the same agent, on a schedule, writing to somewhere you will actually see."
+say "An agent you have to remember to ask is an agent you stop using."
+say ""
+say "So: ask it once, properly, and look at what comes back."
 
 run_quiet "kubectl -n kagent create configmap daily-report \
   --from-file=report.py='$HERE/report.py' \
   --dry-run=client -o yaml | kubectl apply -f -"
+
+# ----------------------------------------------------------- run it once
+cat > "$STATE/report-job.yaml" <<YAML
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: report-now
+  namespace: kagent
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: report
+          image: ${IMAGE}
+          command: ["python3", "/app/report.py"]
+          env:
+            - { name: AGENT_URL, value: "http://my-agent.kagent.svc.cluster.local:8080" }
+            - { name: REPORT_WEBHOOK_URL, value: "${HOOK}" }
+            - { name: PYTHONUNBUFFERED, value: "1" }
+          volumeMounts: [{ name: app, mountPath: /app }]
+          resources:
+            requests: { cpu: 20m, memory: 48Mi }
+            limits:   { memory: 192Mi }
+      volumes:
+        - name: app
+          configMap: { name: daily-report }
+YAML
+
+run "kubectl -n kagent delete job report-now --ignore-not-found"
+run "kubectl apply -f '$STATE/report-job.yaml'"
+
+wait_for "the report job to start" 180 \
+  "kubectl -n kagent get pod -l job-name=report-now -o jsonpath='{.items[0].status.phase}' 2>/dev/null | grep -Eq 'Running|Succeeded|Failed'"
+
+say ""
+say "It is querying seven days of logs and writing the LogQL as it goes."
+say "Give it a minute."
+run "kubectl -n kagent logs -f job/report-now"
+
+if ! kubectl -n kagent wait --for=condition=complete job/report-now --timeout=900s >/dev/null 2>&1; then
+  fail "the report job did not complete"
+  run_quiet "kubectl -n kagent describe job report-now"
+  exit 1
+fi
+printf '\n'
+ok "That is the report."
+[[ -n "$HOOK" ]] && note "it also posted to your page: $HOOK"
+
+pause "talk about what it found"
+
+# -------------------------------------------------- show the schedule, don't set it
+say ""
+say "Running that every morning is the same pod with a schedule around it."
+say "Here is the whole thing:"
 
 cat > "$STATE/report-cronjob.yaml" <<YAML
 apiVersion: batch/v1
@@ -40,8 +102,8 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 1
-      # The agent thinks for 30-60 seconds and may call a dozen tools. Give the
-      # job room; a report that gets killed halfway is worse than none.
+      # The agent thinks for 30-60s and may call a dozen tools. A report killed
+      # halfway is worse than no report.
       activeDeadlineSeconds: 900
       template:
         spec:
@@ -64,40 +126,13 @@ spec:
 YAML
 
 run "cat '$STATE/report-cronjob.yaml'"
-run "kubectl apply -f '$STATE/report-cronjob.yaml'"
-run "kubectl -n kagent get cronjob daily-report"
-
-say ""
-say "Tomorrow at $(echo "$SCHEDULE" | awk '{print $2":"$1}') that runs on its own. Waiting until then would"
-say "make for a poor demo, so trigger one now."
-
-run "kubectl -n kagent delete job report-now --ignore-not-found"
-run "kubectl -n kagent create job report-now --from=cronjob/daily-report"
-
-wait_for "the report job to start" 180 \
-  "kubectl -n kagent get pod -l job-name=report-now -o jsonpath='{.items[0].status.phase}' 2>/dev/null | grep -Eq 'Running|Succeeded|Failed'"
-
-say ""
-say "This takes a minute. The agent is querying seven days of logs, writing"
-say "LogQL as it goes, and composing the answer."
-run "kubectl -n kagent logs -f job/report-now"
-
-if kubectl -n kagent wait --for=condition=complete job/report-now --timeout=900s >/dev/null 2>&1; then
-  ok "report generated"
-else
-  fail "the report job did not complete"
-  run_quiet "kubectl -n kagent describe job report-now"
-  exit 1
-fi
 
 printf '\n'
-ok "You have an agent that reports for duty every morning."
-if [[ -n "$HOOK" ]]; then
-  note "it just posted to: $HOOK"
-  note "open your inbox page and it will be there"
-else
-  note "set REPORT_WEBHOOK_URL in .env and re-run to have it posted to your page"
-fi
-note "change the schedule: REPORT_SCHEDULE='0 9 * * 1' make step-05   (Mondays)"
-note "change the question: edit PROMPT in $HERE/report.py"
+say "Deliberately not applied — nobody wants a job firing while we are still"
+say "talking about it. Turn it on whenever you like:"
+printf '\n'
+note "kubectl apply -f .state/report-cronjob.yaml"
+printf '\n'
+note "change the time first if 07:00 does not suit:  REPORT_SCHEDULE='0 9 * * 1' make step-05"
+note "change the question:  edit PROMPT in $HERE/report.py"
 note "next:  make step-06"
