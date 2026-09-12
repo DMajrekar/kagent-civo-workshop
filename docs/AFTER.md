@@ -78,6 +78,44 @@ When you're done with it:
 make clean
 ```
 
+## Prompts worth stealing
+
+The workshop prompts were tuned to a dataset you no longer have. These are the
+*shapes* that worked, pointed at logs you actually care about.
+
+The single most useful trick, and the one the session turns on: **say what to
+exclude.** "Is anything about to break?" ranks whatever is loudest right now.
+"…that isn't already failing" forces it to reason about the future instead.
+
+```
+What changed in the last 24 hours that wasn't happening the week before?
+
+Anything failing on a schedule? Group errors by hour of day, not by count.
+
+Which service is producing the most log volume, and is any of it worth keeping?
+
+Group today's errors by likely root cause rather than by message.
+
+If I were paged right now with no other context, what would you have me
+check first, and why that rather than the others?
+
+Is anything degrading slowly enough that nobody has noticed — getting worse
+every day but not yet failing?
+
+What is failing quietly? Retried, recovered, and never alerted on.
+
+Is there anything that will break in the next two weeks but is fine today?
+```
+
+Two habits worth keeping:
+
+- **Ask for reasoning, not just findings.** "and why that rather than the
+  others" turns a list into something you can disagree with.
+- **Give it your context in the system prompt, not the question.** It has no
+  idea which of your services matter, what your normal looks like, or what
+  you were paged for last week. Tell it once, in the Agent, rather than every
+  time you ask.
+
 ## Where to take it next
 
 The agent you built is a starting point, not a finished thing. In rough order
