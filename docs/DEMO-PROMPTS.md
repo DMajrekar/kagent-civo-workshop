@@ -49,6 +49,24 @@ how you framed the question. Show both versions if you have the time.
 
 Budget ~80 seconds for it. It is the last thing you do, so let it run.
 
+## The Grafana contrast
+
+The hub's Grafana is exposed anonymously and read-only, so the room can open
+the same data with no agent in the way. Do this live, right before collecting
+what people found.
+
+Open Explore, pick the Loki datasource, and try to find the auth certificate
+expiry. Getting there means knowing that Loki speaks LogQL, that you want a
+selector on `service`, that the line is at `warn` and not `error`, and — the
+part that actually stops people — that certificates are worth looking for at
+all when nothing is failing.
+
+Everything the agent found is sitting right there. None of it is hidden. The
+difference is knowing what to ask, which is the whole session in one demo.
+
+Let attendees try on the projector if they are willing. Nobody finds the
+certificate.
+
 ## Known rough edges
 - **It sometimes mixes services up.** In one run it attributed checkout's
   `v2.3.0 → v2.3.1` deploy to `image-resizer`. The finding was right, the

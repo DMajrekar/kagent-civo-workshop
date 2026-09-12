@@ -45,22 +45,26 @@ ok "ingress address: $ING_IP"
 if [[ -n "${HUB_DOMAIN-}" ]]; then
   MCP_HOST="mcp.${HUB_DOMAIN}"
   WALL_HOST="wall.${HUB_DOMAIN}"
+  GRAF_HOST="logs.${HUB_DOMAIN}"
   warn "Point these at $ING_IP in DNS before continuing, or the ACME challenge fails:"
   note "  $MCP_HOST  ->  $ING_IP"
   note "  $WALL_HOST ->  $ING_IP"
+  note "  $GRAF_HOST ->  $ING_IP"
   pause "confirm DNS is in place"
 else
   DASHED="${ING_IP//./-}"
   MCP_HOST="mcp-${DASHED}.sslip.io"
   WALL_HOST="wall-${DASHED}.sslip.io"
+  GRAF_HOST="logs-${DASHED}.sslip.io"
   note "no HUB_DOMAIN set — using sslip.io, which needs no DNS setup"
 fi
 say ""
-note "MCP:  https://$MCP_HOST/mcp"
-note "wall: https://$WALL_HOST/"
+note "MCP:     https://$MCP_HOST/mcp"
+note "wall:    https://$WALL_HOST/"
+note "grafana: https://$GRAF_HOST/   (anonymous, read-only)"
 
 # Fail early and clearly if the name does not resolve to the ingress.
-for h in "$MCP_HOST" "$WALL_HOST"; do
+for h in "$MCP_HOST" "$WALL_HOST" "$GRAF_HOST"; do
   GOT=$(python3 -c "import socket;print(socket.gethostbyname('$h'))" 2>/dev/null || echo "")
   if [[ "$GOT" != "$ING_IP" ]]; then
     fail "$h resolves to '${GOT:-nothing}', not $ING_IP"
@@ -129,6 +133,30 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: grafana
+  namespace: ${NS}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [${GRAF_HOST}]
+      secretName: grafana-tls
+  rules:
+    - host: ${GRAF_HOST}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port: { number: 80 }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: wall
   namespace: ${NS}
   annotations:
@@ -155,7 +183,7 @@ run "kubectl apply -f '$STATE/ingress.yaml'"
 say ""
 say "Let's Encrypt now validates each hostname over HTTP-01. This usually takes"
 say "under a minute per certificate."
-for c in mcp-tls wall-tls; do
+for c in mcp-tls wall-tls grafana-tls; do
   wait_for "certificate $c to be issued" 600 \
     "[[ \"\$(kubectl -n '$NS' get certificate $c -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 done
@@ -187,13 +215,33 @@ run "kubectl -n '$NS' patch svc webhook-sink -p '{\"spec\":{\"type\":\"ClusterIP
 
 echo "$MCP_URL"  > "$STATE/mcp-endpoint"
 echo "$WALL_URL" > "$STATE/sink-endpoint"
+echo "https://${GRAF_HOST}" > "$STATE/grafana-endpoint"
+
+# A deep link straight into Explore on the workshop Loki datasource, last 7
+# days. Saves the room the "where do I even start" fumble, which is not the
+# interesting part -- knowing what to look for is.
+python3 - "https://${GRAF_HOST}" > "$STATE/grafana-explore-url" <<'PYEOF'
+import json, sys, urllib.parse
+base = sys.argv[1]
+pane = {"a": {"datasource": "workshop-loki",
+              "queries": [{"refId": "A",
+                           "datasource": {"type": "loki", "uid": "workshop-loki"},
+                           "expr": '{env="production"}'}],
+              "range": {"from": "now-7d", "to": "now"}}}
+print(f"{base}/explore?schemaVersion=1&orgId=1&panes=" + urllib.parse.quote(json.dumps(pane)))
+PYEOF
 
 printf '\n'
 ok "Both public endpoints are HTTPS."
 note "MCP_ENDPOINT=$MCP_URL"
 note "wall:      $WALL_URL"
 note "projector: $WALL_URL/wall"
-note "these go on the workshop cards"
+note "explore link (for your slides):"
+note "  $(cat "$STATE/grafana-explore-url")"
+printf '\n'
+say "Worth doing in the session: open that Grafana yourself and try to find"
+say "what the agent found. Everything is there, and finding it needs LogQL and"
+say "knowing which question to ask. That contrast is the point."
 printf '\n'
 warn "Re-run 'make hub-07' now."
 note "The credential handout bakes MCP_ENDPOINT and the webhook URL into every"

@@ -35,6 +35,7 @@ of session time.
 | 00:11 | `make step-02` | kagent install + relax.ai ModelConfig | Blocks on cluster ready; stragglers catch up here |
 | 00:18 | `make step-03` | First agent + dashboard port-forward | First visual payoff. They ask it a question about their own cluster. |
 | 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
+| 00:38 | — | Open Grafana yourself and fail to find it | The strongest argument in the session. See docs/DEMO-PROMPTS.md. |
 | 00:40 | `make step-05` | Run the report, read it together | Runs once and stops for you to talk. The CronJob is shown, not applied. |
 | 00:50 | `make step-06` | Cut the cord: own key, own Loki | They leave with a cluster that still works tomorrow |
 | 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |

@@ -50,6 +50,24 @@ grafana.ini:
     check_for_updates: false
   users:
     allow_sign_up: false
+    # Viewer alone cannot open Explore, which is the only part of Grafana this
+    # workshop actually uses. This grants ad-hoc querying without granting the
+    # ability to save anything -- writes still 403.
+    viewers_can_edit: true
+  # Anonymous read-only access. The point of showing Grafana in the session is
+  # that the room can open the same data and try to find what the agent found --
+  # which does not work if everyone needs a login first. Viewer role only, and
+  # the data is synthetic.
+  auth.anonymous:
+    enabled: true
+    org_name: Main Org.
+    org_role: Viewer
+  auth:
+    disable_login_form: false
+  # Land people in Explore rather than an empty dashboard list: there is
+  # deliberately no dashboard that answers the question for them.
+  dashboards:
+    default_home_dashboard_path: ""
 YAML
 
 run "helm upgrade --install grafana grafana/grafana \
