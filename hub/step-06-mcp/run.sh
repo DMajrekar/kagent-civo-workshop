@@ -271,11 +271,11 @@ else fail "expected 401 with a bad token, got $CODE"; exit 1; fi
 
 say ""
 say "3. A valid token must complete the MCP handshake and list tools."
-run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token '$FIRST_TOKEN'"
+MCP_TOKEN="$FIRST_TOKEN" run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token-env MCP_TOKEN"
 
 say ""
 say "4. And an actual Loki query must return data through the whole path."
-run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token '$FIRST_TOKEN' --quiet \
+MCP_TOKEN="$FIRST_TOKEN" run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token-env MCP_TOKEN --quiet \
   --call list_loki_label_values \
   --args '{\"datasourceUid\":\"workshop-loki\",\"labelName\":\"service\"}'"
 

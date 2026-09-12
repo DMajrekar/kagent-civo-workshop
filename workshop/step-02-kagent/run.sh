@@ -5,6 +5,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 require_env CIVO_API_KEY RELAX_API_KEY
 NAME="${CLUSTER_NAME:-kagent-workshop}"
 REGION="$(echo "${CIVO_REGION:-lon1}" | tr '[:upper:]' '[:lower:]')"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE="$REPO_ROOT/.state"; mkdir -p "$STATE"
 export KUBECONFIG="$STATE/workshop.kubeconfig"
 MODEL="${RELAX_MODEL:-DeepSeek-V4-Pro}"
@@ -46,26 +47,24 @@ run "helm upgrade --install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kag
 say ""
 say "Your relax.ai key goes into a Secret. kagent reads it from there, so you"
 say "can swap the key later without touching any other resource."
-run_quiet "kubectl -n kagent create secret generic kagent-relax \
-  --from-literal=RELAX_API_KEY='$RELAX_API_KEY' \
-  --dry-run=client -o yaml | kubectl apply -f -"
-
-# The chart ships ten built-in agents (Istio, Cilium, Argo, kgateway...). Each
-# is its own Deployment, which is a lot of pods and a lot of noise on a
-# two-node cluster for a sixty-minute session. Keep k8s-agent -- that is the
-# hello-world -- and switch the rest off. They are one --set away if wanted.
-UNUSED_AGENTS=(kgateway-agent istio-agent promql-agent observability-agent
-               argo-rollouts-agent helm-agent cilium-policy-agent
-               cilium-manager-agent cilium-debug-agent)
-DISABLE=""
-for a in "${UNUSED_AGENTS[@]}"; do DISABLE+=" --set ${a}.enabled=false"; done
+# Deliberately not shown via run/run_quiet: both echo the command, and this one
+# carries a live API key. On a screenshare that puts it on the projector.
+printf '\n%s%s$ kubectl -n kagent create secret generic kagent-relax --from-literal=RELAX_API_KEY=****%s\n' \
+  "$BOLD" "$GREEN" "$RESET"
+if kubectl -n kagent create secret generic kagent-relax \
+     --from-literal=RELAX_API_KEY="$RELAX_API_KEY" \
+     --dry-run=client -o yaml | kubectl apply -f - >/dev/null; then
+  ok "secret created"
+else
+  fail "could not create the relax.ai secret"; exit 1
+fi
 
 run "helm upgrade --install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
   --namespace kagent --create-namespace --wait --timeout 10m \
+  --values '$HERE/values.yaml' \
   --set providers.openAI.model='$MODEL' \
-  --set providers.openAI.apiKeySecretRef=kagent-relax \
-  --set providers.openAI.apiKeySecretKey=RELAX_API_KEY \
-  $DISABLE ${KAGENT_VERSION:+--version $KAGENT_VERSION}"
+  --set providers.openAI.config.baseUrl='$BASE_URL' \
+  ${KAGENT_VERSION:+--version $KAGENT_VERSION}"
 
 wait_for "the kagent controller to be ready" 600 \
   "kubectl -n kagent get deploy kagent-controller -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -q '^[1-9]'"
@@ -73,28 +72,27 @@ run "kubectl -n kagent get pods"
 
 # ------------------------------------------------------------ ModelConfig
 say ""
-say "relax.ai speaks the OpenAI API, so kagent reaches it with provider: OpenAI"
-say "and a different baseUrl. That is the entire integration."
-say ""
-say "The chart does not template baseUrl, so patch it onto the ModelConfig the"
-say "chart generated. Everything else -- model name, which Secret holds the key"
-say "-- we already passed as Helm values."
-
-run "kubectl -n kagent patch modelconfig default-model-config --type=merge \
-  -p '{\"spec\":{\"openAI\":{\"baseUrl\":\"${BASE_URL}\"}}}'"
+say "That values file is worth a look — the whole relax.ai integration is one"
+say "block in it. relax.ai speaks the OpenAI API, so kagent reaches it as an"
+say "OpenAI provider with a different address."
+run "sed -n '/^providers:/,/^$/p' '$HERE/values.yaml'"
 
 say ""
-say "This is the whole model wiring, in one resource:"
+say "Which the chart turned into this, before any agent started:"
 run "kubectl -n kagent get modelconfig default-model-config -o yaml | grep -A8 '^spec:'"
 
-say ""
-say "Agents read their model config when they start, and Helm started the"
-say "built-in one before that patch existed -- so right now it is still trying"
-say "to reach api.openai.com with a relax.ai key. Restart it."
-for d in $(kubectl -n kagent get deploy -o name 2>/dev/null | grep -E 'agent$' | grep -v 'kagent-'); do
-  run "kubectl -n kagent rollout restart $d"
-done
-run "kubectl -n kagent rollout status deploy/k8s-agent --timeout=300s"
+# The agents read this at startup. If the baseUrl were missing they would come
+# up pointing at api.openai.com with a relax.ai key and 401 on the first
+# question -- so assert it rather than trusting the chart across versions.
+ACTUAL=$(kubectl -n kagent get modelconfig default-model-config \
+  -o jsonpath='{.spec.openAI.baseUrl}' 2>/dev/null || true)
+if [[ "$ACTUAL" != "$BASE_URL" ]]; then
+  fail "ModelConfig baseUrl is '${ACTUAL:-empty}', expected '$BASE_URL'"
+  note "Without it the agents call api.openai.com with a relax.ai key and 401."
+  note "Check providers.openAI.config.baseUrl in $HERE/values.yaml"
+  exit 1
+fi
+ok "agents are pointed at relax.ai from the moment they start"
 
 printf '\n'
 ok "kagent is running and knows how to reach relax.ai."

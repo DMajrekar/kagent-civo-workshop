@@ -26,14 +26,24 @@ say "except this server is somewhere else entirely."
 
 say ""
 say "First, check the endpoint answers before asking an agent to depend on it."
-run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token '$MCP_TOK'"
+# --token is read from the environment so the displayed command does not carry
+# a live credential; this is on a screenshare.
+printf '\n%s%s$ python3 scripts/mcp-probe.py %s --token $MCP_TOKEN%s\n\n' \
+  "$BOLD" "$GREEN" "$MCP_URL" "$RESET"
+MCP_TOKEN="$MCP_TOK" python3 "$REPO_ROOT/scripts/mcp-probe.py" "$MCP_URL" --token-env MCP_TOKEN
 
 say ""
 say "The token goes in a Secret; the RemoteMCPServer references it as a header."
 say "Your token is yours -- it identifies you to the hub."
-run_quiet "kubectl -n kagent create secret generic workshop-logs-auth \
-  --from-literal=token='Bearer $MCP_TOK' \
-  --dry-run=client -o yaml | kubectl apply -f -"
+printf '\n%s%s$ kubectl -n kagent create secret generic workshop-logs-auth --from-literal=token=****%s\n' \
+  "$BOLD" "$GREEN" "$RESET"
+if kubectl -n kagent create secret generic workshop-logs-auth \
+     --from-literal=token="Bearer $MCP_TOK" \
+     --dry-run=client -o yaml | kubectl apply -f - >/dev/null; then
+  ok "secret created"
+else
+  fail "could not create the MCP token secret"; exit 1
+fi
 
 cat > "$STATE/remote-mcp.yaml" <<YAML
 apiVersion: kagent.dev/v1alpha2

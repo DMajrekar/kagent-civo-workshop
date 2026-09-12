@@ -1,0 +1,43 @@
+# kagent, configured for this workshop.
+#
+# Worth reading: the whole relax.ai integration is the `providers` block below.
+# relax.ai speaks the OpenAI API, so kagent talks to it as an OpenAI provider
+# with a different address.
+#
+# make step-02 overrides `model` and `config.baseUrl` from your .env if you
+# changed them there; everything else comes from this file.
+
+providers:
+  default: openAI
+  openAI:
+    provider: OpenAI
+
+    # Must support tool calling — a kagent agent is a tool-call loop. All four
+    # relax.ai chat models do; this one is the most reliable at finding things
+    # in the logs (see docs/DEMO-PROMPTS.md for the comparison).
+    model: DeepSeek-V4-Pro
+
+    # The key lives in a Secret, created by step-02 before this chart installs.
+    # Swapping providers later means changing the Secret, not the agents.
+    apiKeySecretRef: kagent-relax
+    apiKeySecretKey: RELAX_API_KEY
+
+    # `config` is passed straight through into the ModelConfig's provider block,
+    # which is how a non-OpenAI endpoint gets specified. This one field is the
+    # entire integration.
+    config:
+      baseUrl: https://api.relax.ai/v1
+
+# The chart ships ten built-in agents. k8s-agent is the one the workshop uses;
+# the rest are a lot of pods and a lot of noise on a two-node cluster. Turn any
+# of them back on by flipping enabled to true.
+k8s-agent:            { enabled: true }
+kgateway-agent:       { enabled: false }
+istio-agent:          { enabled: false }
+promql-agent:         { enabled: false }
+observability-agent:  { enabled: false }
+argo-rollouts-agent:  { enabled: false }
+helm-agent:           { enabled: false }
+cilium-policy-agent:  { enabled: false }
+cilium-manager-agent: { enabled: false }
+cilium-debug-agent:   { enabled: false }

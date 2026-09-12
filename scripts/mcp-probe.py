@@ -8,7 +8,7 @@ proxy can happily return 200 for a session it has actually broken.
 
   ./scripts/mcp-probe.py <url> [--token TOKEN] [--call TOOL --args JSON]
 """
-import argparse, json, sys, urllib.error, urllib.request
+import argparse, json, os, sys, urllib.error, urllib.request
 
 G, R, Y, D, B, X = "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[1m", "\033[0m"
 
@@ -77,12 +77,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("url")
     ap.add_argument("--token")
+    # Lets a caller pass the token without putting it in a displayed command.
+    ap.add_argument("--token-env", help="read the token from this env var instead")
     ap.add_argument("--call")
     ap.add_argument("--args", default="{}")
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
 
-    m = MCP(a.url, a.token)
+    token = os.environ.get(a.token_env) if a.token_env else a.token
+    m = MCP(a.url, token)
     try:
         info = m.initialize()
     except urllib.error.HTTPError as e:

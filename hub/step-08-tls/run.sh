@@ -175,7 +175,7 @@ CODE=$(curl -sS -o /dev/null -w '%{http_code}' -XPOST "$MCP_URL" -H 'Content-Typ
 [[ "$CODE" == "401" ]] && ok "unauthenticated MCP request still rejected (401) over TLS" \
   || { fail "expected 401 without a token, got $CODE"; exit 1; }
 
-run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token '$TOKEN' --quiet \
+MCP_TOKEN="$TOKEN" run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_URL' --token-env MCP_TOKEN --quiet \
   --call list_loki_label_values \
   --args '{\"datasourceUid\":\"workshop-loki\",\"labelName\":\"service\"}'"
 
