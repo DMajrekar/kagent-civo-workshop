@@ -270,14 +270,123 @@ out.append(h,b,v);
 </script>""" % (json.dumps(ADJECTIVES), json.dumps(NOUNS)))
 
 
+# What each step looks like when it has actually worked. These are the real
+# assertions the scripts print, so ticking a box means something -- a checklist
+# of "did you run it" would tell an attendee nothing they did not already know.
+STEPS = [
+    ("01", "Create your cluster", "make step-01",
+     "Cluster creation is under way. It keeps building while you listen."),
+    ("02", "Install kagent", "make step-02",
+     "kagent is running and knows how to reach relax.ai."),
+    ("03", "Your first agent", "make step-03",
+     "Two agents answered a question about your own cluster."),
+    ("04", "Seven days of logs", "make step-04",
+     "Your agent listed all eight services from the workshop platform."),
+    ("05", "A report every morning", "make step-05",
+     "A report appeared below. This one ticks itself."),
+    ("06", "Make it yours", "make step-06",
+     "Your cluster no longer depends on the workshop hub."),
+]
+
+
+def steps_markup():
+    rows = []
+    for num, title, cmd, done_when in STEPS:
+        rows.append(
+            f'<li class="step" data-step="{html.escape(num)}">'
+            f'<button class="tick" type="button" aria-pressed="false" '
+            f'aria-label="Mark step {html.escape(num)} done"></button>'
+            f'<div class="what"><span class="st">{html.escape(title)}</span>'
+            f'<code>{html.escape(cmd)}</code>'
+            f'<span class="when">{html.escape(done_when)}</span></div></li>')
+    return "".join(rows)
+
+
 def inbox_page(code):
     return page(f"Inbox — {code}", """
-<h1>%s</h1>
-<p class="sub">Reports appear here as your CronJob posts them.
-Older ones are kept in <em>this browser</em>.</p>
+<h1>{{CODE}}</h1>
+<p class="sub">Your progress and your reports. Both live in this browser —
+nothing here is sent anywhere.</p>
+
+<section class="prog">
+  <div class="phead">
+    <h2>Where you are</h2>
+    <span class="count" id="count">0 of 6</span>
+  </div>
+  <div class="bar"><span id="fill"></span></div>
+  <ol class="steps" id="steps">{{STEPS}}</ol>
+  <p class="sub" style="font-size:.82rem;margin:14px 0 0">
+    Behind? Don't catch up — run the step everyone else is on. Each one stands
+    on its own.</p>
+</section>
+
+<h2 class="rh">Reports</h2>
 <div id="list"><div class="empty">Nothing yet. Trigger your report job and it will show up.</div></div>
+
+<style>
+.prog{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;margin:22px 0 30px}
+.phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.prog h2,.rh{font-size:.95rem;margin:0;letter-spacing:-.01em}
+.rh{margin:0 0 4px}
+.count{color:var(--dim);font-size:.82rem;font-variant-numeric:tabular-nums}
+.bar{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0 16px}
+.bar span{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.step{display:flex;gap:12px;align-items:flex-start;padding:9px 4px;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.tick{flex:0 0 auto;width:19px;height:19px;margin-top:2px;padding:0;border-radius:6px;
+      border:1.5px solid var(--line);background:transparent;cursor:pointer;position:relative}
+.tick:hover{border-color:var(--accent)}
+.tick[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.tick[aria-pressed="true"]::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;
+      border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+.what{display:flex;flex-direction:column;gap:3px;min-width:0}
+.st{font-weight:600;font-size:.9rem}
+.what code{font-size:.8rem;color:var(--accent)}
+.when{color:var(--dim);font-size:.8rem}
+.step.done .st,.step.done .when{opacity:.5}
+.step.done .st{text-decoration:line-through;text-decoration-thickness:1px}
+.step.auto .tick{cursor:default}
+@media(prefers-reduced-motion:reduce){.bar span{transition:none}}
+</style>
+
 <script>
-const CODE=%s, KEY="workshop-archive-"+CODE;
+const CODE={{CODE_JSON}}, KEY="workshop-archive-"+CODE, PKEY="workshop-progress-"+CODE;
+// ---- progress -------------------------------------------------------------
+function loadProg(){try{return JSON.parse(localStorage.getItem(PKEY)||"[]");}catch(e){return [];}}
+function saveProg(a){try{localStorage.setItem(PKEY,JSON.stringify(a));}catch(e){}}
+let prog=loadProg();
+const stepsEl=document.getElementById("steps");
+
+function paintProg(){
+  const items=[...stepsEl.querySelectorAll(".step")];
+  let n=0;
+  for(const li of items){
+    const on=prog.includes(li.dataset.step);
+    if(on) n++;
+    li.classList.toggle("done",on);
+    li.querySelector(".tick").setAttribute("aria-pressed",on?"true":"false");
+  }
+  document.getElementById("count").textContent=n+" of "+items.length;
+  document.getElementById("fill").style.width=(n/items.length*100)+"%";
+}
+stepsEl.addEventListener("click",ev=>{
+  const b=ev.target.closest(".tick"); if(!b) return;
+  const li=b.closest(".step");
+  if(li.classList.contains("auto")) return;      // step 05 ticks itself
+  const id=li.dataset.step;
+  prog = prog.includes(id) ? prog.filter(x=>x!==id) : prog.concat([id]);
+  saveProg(prog); paintProg();
+});
+function autoTick(id){
+  const li=stepsEl.querySelector('.step[data-step="'+id+'"]');
+  if(li) li.classList.add("auto");
+  if(!prog.includes(id)){ prog=prog.concat([id]); saveProg(prog); }
+  paintProg();
+}
+paintProg();
+
+// ---- reports --------------------------------------------------------------
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||"[]");}catch(e){return [];}}
 function save(a){try{localStorage.setItem(KEY,JSON.stringify(a.slice(-60)));}catch(e){}}
 function fmt(ms){const d=new Date(ms);return d.toLocaleString();}
@@ -304,10 +413,16 @@ let archive=load();
 render(archive);
 async function poll(){
   try{const r=await fetch("/api/c/"+CODE);const live=(await r.json()).items||[];
-    archive=merge(archive,live);save(archive);render(archive);}catch(e){}
+    archive=merge(archive,live);save(archive);render(archive);
+    // A report arriving is real evidence step 05 worked, so tick it.
+    if(archive.length) autoTick("05");
+  }catch(e){}
 }
 poll();setInterval(poll,5000);
-</script>""" % (html.escape(code), json.dumps(code)))
+</script>"""
+            .replace("{{CODE}}", html.escape(code))
+            .replace("{{STEPS}}", steps_markup())
+            .replace("{{CODE_JSON}}", json.dumps(code)))
 
 
 WALL = page("The wall", """
@@ -339,8 +454,9 @@ poll();setInterval(poll,4000);
 
 JOIN = page("Join the workshop", """
 <h1>Get your workshop credentials</h1>
-<p class="sub">Enter the passphrase from the slides. You'll get a ready-made
-<code>.env</code> file — everything filled in except your own Civo key.</p>
+<p class="sub">Enter the passphrase from the slides and you'll get a ready-made
+<code>.env</code> file. Add your Civo key below and it is complete — save it
+next to the README and run <code>make doctor</code>.</p>
 
 <form id="f" autocomplete="off">
   <p><label>Passphrase from the slides<br>
@@ -349,6 +465,13 @@ JOIN = page("Join the workshop", """
     <input id="name" type="text" spellcheck="false" autocapitalize="none"></label>
     <br><span class="sub" style="font-size:.82rem">Used to give you the same
     credentials back if you reload or switch device.</span></p>
+  <p><label>Your Civo API key <span style="font-weight:400">(optional)</span><br>
+    <input id="civo" type="password" spellcheck="false" autocapitalize="none"
+           autocomplete="off" placeholder="paste it here and the .env is complete"></label>
+    <br><span class="sub" style="font-size:.82rem">From
+    <a href="https://dashboard.civo.com/security" target="_blank" rel="noopener">dashboard.civo.com/security</a>.
+    This never leaves your browser — it is pasted into the file on this page, not
+    sent to us. Leave it blank and add it to the file yourself.</span></p>
   <p><button type="submit">Get my credentials</button></p>
 </form>
 <div id="out"></div>
@@ -381,6 +504,14 @@ f.onsubmit=async ev=>{
     out.append(p); return;
   }
   try{localStorage.setItem("workshop-name",name);localStorage.setItem("workshop-code",d.code);}catch(e){}
+
+  // Splice the Civo key in here, in the browser. It is the attendee's own
+  // credential for their own account and the server has no use for it, so it
+  // is never sent -- the field above is not part of the request.
+  const civo=document.getElementById("civo").value.trim();
+  let envText=d.env;
+  if(civo) envText=envText.replace(/^CIVO_API_KEY=.*$/m,"CIVO_API_KEY="+civo);
+
   out.textContent="";
   const h=document.createElement("div");
   h.innerHTML='<p class="sub">You are attendee <strong class="n"></strong>. '+
@@ -393,18 +524,20 @@ f.onsubmit=async ev=>{
   if(d.shared) h.querySelector(".shared").hidden=false;
   const pre=document.createElement("pre"); pre.className="body";
   pre.style.cssText="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto";
-  pre.textContent=d.env;                              // textContent, never innerHTML
+  // Redact the Civo key in the on-screen preview: people do this on a shared
+  // screen, and the download still carries the real value.
+  pre.textContent=civo ? envText.replace(/^(CIVO_API_KEY=).*$/m,"$1"+"*".repeat(12)) : envText;
   const dl=document.createElement("button");
   dl.textContent="Download .env";
   dl.onclick=()=>{
-    const b=new Blob([d.env],{type:"text/plain"});
+    const b=new Blob([envText],{type:"text/plain"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(b); a.download=".env"; a.click();
     URL.revokeObjectURL(a.href);
   };
   const cp=document.createElement("button");
   cp.textContent="Copy"; cp.style.marginLeft="8px";
-  cp.onclick=()=>{navigator.clipboard.writeText(d.env).then(()=>{
+  cp.onclick=()=>{navigator.clipboard.writeText(envText).then(()=>{
     cp.textContent="Copied"; setTimeout(()=>cp.textContent="Copy",1500);});};
   const inbox=document.createElement("button");
   inbox.textContent="Open my inbox"; inbox.style.marginLeft="8px";
