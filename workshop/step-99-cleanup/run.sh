@@ -49,6 +49,9 @@ else
   note "no volumes found attached to this cluster"
 fi
 
+# The dashboard forward points at a cluster that is about to stop existing.
+bash "$REPO_ROOT/scripts/ui.sh" stop >/dev/null 2>&1 || true
+
 run "civo kubernetes remove '$CID' --region '$REGION' --yes"
 
 if [[ -n "$VOLS" ]]; then

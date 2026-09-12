@@ -21,11 +21,43 @@ PORT="${UI_PORT:-8082}"
 ACTION="${1:-start}"
 
 alive() { [[ -s "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; }
+
+# An earlier run can leave a port-forward holding the port with no pidfile --
+# a failed start, or a cluster deleted out from under it. Identify the holder
+# from the listening socket rather than by matching command lines: a pgrep
+# pattern also matches the shell that contains the pattern, which is how this
+# went wrong the first time.
+reclaim_orphan() {
+  local pid
+  pid=$(PORT="$PORT" python3 - <<'PYEOF'
+import os, re, subprocess
+port = os.environ["PORT"]
+try:
+    out = subprocess.run(["ss", "-lptnH"], capture_output=True, text=True).stdout
+except Exception:
+    raise SystemExit
+for line in out.splitlines():
+    if f":{port} " not in line:
+        continue
+    m = re.search(r'users:\(\("([^"]+)",pid=(\d+)', line)
+    # Only ever reclaim a kubectl -- never something else that happens to be here.
+    if m and m.group(1) == "kubectl":
+        print(m.group(2)); break
+PYEOF
+)
+  [[ -z "$pid" ]] && return 1
+  note "reclaiming an orphaned kubectl port-forward on $PORT (pid $pid)"
+  kill "$pid" 2>/dev/null || true
+  for _ in $(seq 1 10); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+  return 0
+}
+
 answering() { curl -sf -o /dev/null --max-time 3 "http://127.0.0.1:$PORT/" 2>/dev/null; }
 
 case "$ACTION" in
   stop)
     if alive; then kill "$(cat "$PIDFILE")" 2>/dev/null; ok "dashboard closed"
+    elif reclaim_orphan; then ok "dashboard closed"
     else note "dashboard was not running"; fi
     rm -f "$PIDFILE"
     ;;
@@ -39,7 +71,15 @@ case "$ACTION" in
       ok "dashboard already open at http://localhost:$PORT"
       exit 0
     fi
+    # Alive but not answering: usually a forward left over from a cluster that
+    # has since been deleted. It still holds the port, so reclaim it.
+    if alive; then
+      note "clearing a stale port-forward on $PORT"
+      kill "$(cat "$PIDFILE")" 2>/dev/null || true
+      sleep 2
+    fi
     rm -f "$PIDFILE"
+    reclaim_orphan || true
     # Survives this script exiting, which is the whole point.
     nohup kubectl -n kagent port-forward svc/kagent-ui "$PORT:8080" \
       >/dev/null 2>&1 < /dev/null &

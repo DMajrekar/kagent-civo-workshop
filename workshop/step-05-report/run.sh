@@ -135,4 +135,9 @@ note "kubectl apply -f .state/report-cronjob.yaml"
 printf '\n'
 note "change the time first if 07:00 does not suit:  REPORT_SCHEDULE='0 9 * * 1' make step-05"
 note "change the question:  edit PROMPT in $HERE/report.py"
-note "next:  make step-06"
+printf '\n'
+say "That is the workshop. You have two agents, seven days of logs and a report"
+say "you can schedule whenever you like — and you keep all of it."
+printf '\n'
+note "what to try next, and what this costs:  docs/AFTER.md"
+note "a scaffold for your own agent:          examples/my-agent.yaml"

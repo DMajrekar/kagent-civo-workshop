@@ -22,8 +22,8 @@ wait_for "the built-in k8s-agent to be ready" 300 \
 # forward of its own.
 run "bash '$REPO_ROOT/scripts/ui.sh' start"
 UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"
-wait_for "the dashboard to answer for k8s-agent" 120 \
-  "curl -sf -o /dev/null '$UI/k8s-agent/.well-known/agent-card.json'"
+wait_for "k8s-agent to start serving" 180 \
+  "[[ -n \"\$(kubectl -n kagent get endpoints k8s-agent -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null)\" ]]"
 
 run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/k8s-agent' \
   'How many pods are running in the kagent namespace, and are any of them unhealthy?'"
@@ -42,8 +42,8 @@ wait_for "cluster-scout to be ready" 300 \
   "[[ \"\$(kubectl -n kagent get agent cluster-scout -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 run "kubectl -n kagent get agents"
 
-wait_for "cluster-scout to appear in the dashboard" 120 \
-  "curl -sf -o /dev/null '$UI/cluster-scout/.well-known/agent-card.json'"
+wait_for "cluster-scout to start serving" 180 \
+  "[[ -n \"\$(kubectl -n kagent get endpoints cluster-scout -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null)\" ]]"
 
 run "python3 '$REPO_ROOT/scripts/ask-agent.py' '$UI/cluster-scout' \
   'What namespaces exist in this cluster, and what is running in each?'"

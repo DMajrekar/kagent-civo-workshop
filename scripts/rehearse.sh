@@ -15,13 +15,13 @@ KEEP_GOING=""
 if [[ "${1-}" == "-k" || "${1-}" == "--keep-going" ]]; then KEEP_GOING=1; shift; fi
 
 STEPS=("$@")
-[[ ${#STEPS[@]} -eq 0 ]] && STEPS=(01 02 03 04 05 06)
+[[ ${#STEPS[@]} -eq 0 ]] && STEPS=(01 02 03 04 05)
 
 # Budgeted minutes, from the run sheet.
 budget_for() {
   case "$1" in
     01) echo 2 ;; 02) echo 7 ;; 03) echo 9 ;;
-    04) echo 13 ;; 05) echo 10 ;; 06) echo 6 ;;
+    04) echo 13 ;; 05) echo 10 ;;
     *)  echo 0 ;;
   esac
 }

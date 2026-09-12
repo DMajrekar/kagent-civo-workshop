@@ -6,7 +6,7 @@
 #
 # Copy this, rename it, and edit the two things that matter: the system prompt
 # and the tool list.
-#   kubectl apply -f my-agent.yaml
+#   kubectl apply -f examples/my-agent.yaml
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:

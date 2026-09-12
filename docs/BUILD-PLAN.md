@@ -62,7 +62,7 @@ consequences for how you build it:
 
 ## Wed 16 – Thu 17 Sep — the attendee path
 
-- [x] step-01 … step-06 scripts, each idempotent and re-runnable
+- [x] step-01 … step-05 scripts, each idempotent and re-runnable
 - [x] **Model bake-off** — DeepSeek-V4-Pro. See docs/DEMO-PROMPTS.md.
 - [x] Portable log stack: Loki + mcp-grafana + generators, sized for one
       cluster. **Build this once, it does two jobs** — the WiFi fallback for
@@ -122,7 +122,7 @@ Deliberately empty. Something above will have slipped.
 ## Tue 20 Oct — two days' notice
 
 - [ ] Email attendees that the endpoint goes on the 22nd, pointing at
-      `make step-06`. Turns "my agent broke" into "I knew that was coming".
+      docs/AFTER.md. Turns "my agent broke" into "I knew that was coming".
 
 ## Thu 22 Oct — teardown
 

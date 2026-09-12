@@ -22,10 +22,11 @@ if [[ -z "$CID" ]]; then
 fi
 
 warn "This deletes the shared hub: Loki, seven days of logs, the MCP endpoint"
-warn "and the wall. Any attendee who has not run step 06 loses their log tools."
+warn "and the wall. Every attendee log-detective loses its log tools."
 say ""
 say "Before you do this, check you gave them notice — two days beforehand,"
-say "pointing at 'make step-06'. See docs/AFTER.md."
+say "pointing at docs/AFTER.md, which explains how to repoint the agent at"
+say "logs of their own."
 printf '\n'
 
 if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then

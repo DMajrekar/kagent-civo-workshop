@@ -37,7 +37,7 @@ of session time.
 | 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
 | 00:38 | — | Open Grafana yourself and fail to find it | The strongest argument in the session. See docs/DEMO-PROMPTS.md. |
 | 00:40 | `make step-05` | Run the report, read it together | Runs once and stops for you to talk. The CronJob is shown, not applied. |
-| 00:50 | `make step-06` | Cut the cord: own key, own Loki | They leave with a cluster that still works tomorrow |
+| 00:50 | — | Closing learnings, what next | Slides 11-15. Unhurried — this is where it lands. |
 | 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |
 
 ## Measured timings
@@ -51,8 +51,7 @@ A full rehearsal from a deleted cluster (`make rehearse`, 11 Sep):
 | step-03 | 0m34s | 9m |
 | step-04 | 0m10s | 13m |
 | step-05 | 1m18s | 10m |
-| step-06 | 6m11s | 6m — **over** |
-| **total** | **13m51s** | 47m |
+| **total** | **8m05s** | 47m |
 
 The useful finding: **the machine needs about fourteen minutes of the hour.**
 Everything else is you talking, people typing, and questions. The slots are not
@@ -71,10 +70,10 @@ because a later step that quietly does a failed step's work reads as a pass.
 
 There is no slack in this. Decide **in advance** what you drop:
 
-- **First cut:** step-06 entirely — it becomes "read docs/AFTER.md at home".
-  Safe now: attendees have their own relax.ai keys and the hub stays up until
-  **2026-10-22**, so nothing breaks when they walk out. This is your real
-  buffer; spend it on step-04 if the room is engaged.
+- **First cut:** the Grafana contrast (slide 9). It is the best argument in
+  the session, so cut it last of the optional things — but it is optional.
+- **Real buffer:** step-04. There is no fixed end to the exploration; let it
+  run long if the room is engaged and short if it is not.
 - **Second cut:** step-05 already stops after the one-off run; if you are
   short, skip reading the CronJob YAML and just say it is in the repo.
 - **Never cut:** step-04. It is the entire point of the workshop.
@@ -90,8 +89,8 @@ saying out loud, not left in a README:
    complaint.
 2. **The hub goes away on 2026-10-22.** Put the date on the slide and in
    docs/AFTER.md. A month is long enough that they will have forgotten, so the
-   date needs to be somewhere they'll find it later — which is why step-06
-   exists even though it's now the first thing you cut.
+   date needs to be somewhere they'll find it later, so put it in the
+   follow-up email as well as on the slide.
 
 ## Failure drills
 

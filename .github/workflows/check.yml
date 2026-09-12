@@ -82,6 +82,21 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
 
+      - name: Rehearsal covers every step
+        run: |
+          python3 - <<'PY'
+          import glob, re, sys
+          on_disk = sorted(d.split('step-')[1][:2] for d in glob.glob('workshop/step-*')
+                           if not d.endswith(('step-00-prework', 'step-99-cleanup')))
+          src = open('scripts/rehearse.sh').read()
+          listed = re.search(r'STEPS=\(([^)]*)\)', src).group(1).split()
+          if listed != on_disk:
+              print(f"::error file=scripts/rehearse.sh::rehearse runs {listed} "
+                    f"but the repo has {on_disk}")
+              sys.exit(1)
+          print("rehearsal step list matches the repo")
+          PY
+
       - name: No credentials committed
         run: |
           if git grep -nE 'rak_[A-Za-z0-9]{20,}|glsa_[A-Za-z0-9_]{20,}|BEGIN [A-Z ]*PRIVATE KEY' \

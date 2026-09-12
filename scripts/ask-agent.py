@@ -54,8 +54,9 @@ def main():
 
     print(f"{D}asking:{X} {a.question}\n")
     t0 = time.time()
-    try:
-        resp = rpc(a.url, "message/send", {
+
+    def send():
+        return rpc(a.url, "message/send", {
             "message": {
                 "role": "user",
                 "parts": [{"kind": "text", "text": a.question}],
@@ -63,12 +64,28 @@ def main():
                 "kind": "message",
             }
         }, a.timeout)
-    except urllib.error.HTTPError as e:
-        print(f"{R}HTTP {e.code}: {e.read().decode('utf-8','replace')[:400]}{X}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"{R}{type(e).__name__}: {e}{X}")
-        sys.exit(1)
+
+    # The agent card is served by the controller from the Agent resource, so it
+    # answers before the agent's own pod is accepting connections. A question
+    # asked in that window comes back as "connection refused" wrapped in an A2A
+    # INTERNAL_ERROR. Retry rather than making that the attendee's problem.
+    resp = None
+    for attempt in range(1, 6):
+        try:
+            resp = send()
+        except urllib.error.HTTPError as e:
+            print(f"{R}HTTP {e.code}: {e.read().decode('utf-8','replace')[:400]}{X}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"{R}{type(e).__name__}: {e}{X}")
+            sys.exit(1)
+        err = json.dumps(resp.get("error", "")) if "error" in resp else ""
+        if "connection refused" in err or "no such host" in err:
+            if attempt < 5:
+                print(f"{D}agent still starting, retrying ({attempt}/5)…{X}")
+                time.sleep(5)
+                continue
+        break
 
     if "error" in resp:
         print(f"{R}agent returned an error:{X}")

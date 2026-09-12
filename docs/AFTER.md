@@ -5,55 +5,40 @@ things: **what still works tomorrow**, and **what it costs**.
 
 ## What breaks, and when
 
-Your agent depends on one thing you don't own: the workshop hub.
+| | Lifetime | What happens when it ends |
+|---|---|---|
+| `cluster-scout` | yours, indefinitely | nothing — it only ever needed your own cluster |
+| `log-detective` | **the log tools stop on 2026-10-22** | it keeps answering, but loses its view of the log platform |
+| Your relax.ai key | yours — check with relax.ai for quota | nothing, unless you exhaust the quota |
 
-| Dependency | Lifetime | What happens when it ends |
-|------------|----------|---------------------------|
-| The hub's MCP endpoint | **until 2026-10-22** | Agent loses its log tools. It still answers and can still see your own cluster, but the seven-days-of-logs trick stops working. |
-| Your relax.ai key | Yours — check with relax.ai for quota | Nothing, unless you exhaust the quota |
+So nothing breaks the day after the workshop. Put **2026-10-22** in your
+calendar, because in a month you will not remember why one of your agents got
+less useful.
 
-So nothing breaks the day after the workshop. But put **2026-10-22** in your
-calendar now, because in a month you will not remember why your agent suddenly
-got less useful.
+## Pointing it at your own logs
 
-`make step-06` cuts the cord ahead of that date. There's no rush — but it takes
-about two minutes, and doing it while the workshop is fresh is easier than
-reverse-engineering it in five weeks.
+When the hub goes, don't replace it with a copy of a fake platform — point the
+agent at logs you actually care about. It is one field.
 
-## Cutting the cord
-
-### 1. Your relax.ai key
-
-The key on your workshop card is yours — it isn't shared with anyone else and
-it isn't rotated after the event. Check your quota at
-[relax.ai](https://relax.ai); if you need to swap it for another one later:
+`log-detective` reaches the hub through a `RemoteMCPServer` called
+`workshop-logs`. Swap the URL for an MCP server in front of your own Grafana:
 
 ```bash
-kubectl -n kagent create secret generic kagent-relax \
-  --from-literal=RELAX_API_KEY=<your-key> \
-  --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n kagent rollout restart deploy/kagent
+kubectl -n kagent edit remotemcpserver workshop-logs
+#   spec.url: https://<your-mcp-grafana>/mcp
 ```
 
-Nothing else changes — the `ModelConfig` already points at that secret by name.
+If you don't already run one, `mcp-grafana` is a single Deployment pointed at
+a Grafana instance with `GRAFANA_URL` and a service-account token — the hub
+runs exactly that, and `hub/step-06-mcp/` in this repo is a working example
+including the bearer-token proxy in front of it.
 
-### 2. Your own logs
+Everything else stays as it is. Same agent, same model, same prompt: it just
+looks somewhere real instead.
 
-The hub was a fleet of deliberately broken services. You can run a small
-version of it in your own cluster:
-
-```bash
-make step-06            # deploys Loki + mcp-grafana + the log generators
-```
-
-This deploys the same stack the hub ran, sized for one cluster, and repoints
-your `RemoteMCPServer` at `http://mcp-grafana.observability:8000/mcp` instead
-of the hub. Same tools, same agent, no external dependency — and it keeps
-working after 2026-10-22.
-
-If you'd rather point it at logs you actually care about, swap the Loki URL in
-the `mcp-grafana` Deployment for your own Grafana or Loki — the agent doesn't
-care where the data comes from.
+If you would rather it stopped asking about logs at all, delete the second
+entry under `tools` in the Agent and re-apply — it goes back to being a
+cluster agent like `cluster-scout`.
 
 ## What it costs
 
@@ -136,4 +121,4 @@ of effort:
    `log-detective` are deliberately separate. A triage agent that routes to
    specialists works better than one agent that knows everything.
 
-`workshop/step-06-extend/my-agent.yaml` is a commented scaffold to start from.
+`examples/my-agent.yaml` is a commented scaffold to start from.

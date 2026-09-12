@@ -8,7 +8,7 @@ export KUBECONFIG="$STATE/workshop.kubeconfig"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Attendees get these on their workshop card, in .env. The instructor running
-# the whole thing locally can fall back to what hub step 06 wrote.
+# the whole thing locally can fall back to what the hub steps wrote.
 MCP_URL="${MCP_ENDPOINT:-$(cat "$STATE/mcp-endpoint" 2>/dev/null || true)}"
 MCP_TOK="${MCP_TOKEN:-$(awk 'NR==1{print $2}' "$STATE/mcp-tokens.txt" 2>/dev/null || true)}"
 [[ -n "$MCP_URL" && -n "$MCP_TOK" ]] || {
@@ -100,8 +100,10 @@ wait_for "log-detective to be ready" 300 \
 
 run "bash '$REPO_ROOT/scripts/ui.sh' start"
 UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"
-wait_for "log-detective to appear in the dashboard" 120 \
-  "curl -sf -o /dev/null '$UI/log-detective/.well-known/agent-card.json'"
+# The card comes from the controller, so it is not evidence the agent pod is
+# serving. Wait for the Service to actually have a ready endpoint.
+wait_for "log-detective to start serving" 180 \
+  "[[ -n \"\$(kubectl -n kagent get endpoints log-detective -o jsonpath='{.subsets[*].addresses[*].ip}' 2>/dev/null)\" ]]"
 
 say ""
 say "Start with something simple, to prove it can see the data at all."
