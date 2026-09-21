@@ -31,6 +31,7 @@ run "helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --fo
 
 run "helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
+  --version '${INGRESS_NGINX_VERSION:-4.15.1}' \
   --set controller.service.type=LoadBalancer \
   --set controller.replicaCount=1 \
   --set controller.resources.requests.cpu=50m \
@@ -77,6 +78,7 @@ ok "both hostnames resolve to the ingress"
 # ------------------------------------------------------------ cert-manager
 run "helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager --create-namespace \
+  --version '${CERT_MANAGER_VERSION:-v1.21.2}' \
   --set crds.enabled=true \
   --set resources.requests.cpu=20m \
   --wait --timeout 10m"

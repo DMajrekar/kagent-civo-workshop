@@ -99,6 +99,26 @@ jobs:
           print("rehearsal step list matches the repo")
           PY
 
+      - name: Charts and images are pinned
+        run: |
+          python3 - <<'PY'
+          import glob, re, sys
+          bad = []
+          for f in sorted(glob.glob('**/run.sh', recursive=True)):
+              src = open(f).read()
+              for m in re.finditer(r'helm upgrade --install\s+(\S+)[^"]*?"', src, re.S):
+                  if '--version' not in m.group(0):
+                      bad.append(f"{f}: helm install of {m.group(1)} has no --version")
+              for m in re.finditer(r'IMAGE:-([^}\s]+)', src):
+                  ref = m.group(1)
+                  if ref.endswith(':latest') or (':' not in ref and '@' not in ref):
+                      bad.append(f"{f}: image {ref} is unpinned")
+          for b in bad:
+              print(f"::error::{b}")
+          print("all charts and images pinned" if not bad else "")
+          sys.exit(1 if bad else 0)
+          PY
+
       - name: No credentials committed
         run: |
           if git grep -nE 'rak_[A-Za-z0-9]{20,}|glsa_[A-Za-z0-9_]{20,}|BEGIN [A-Z ]*PRIVATE KEY' \

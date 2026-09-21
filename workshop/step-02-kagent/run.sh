@@ -8,6 +8,9 @@ REGION="$(echo "${CIVO_REGION:-lon1}" | tr '[:upper:]' '[:lower:]')"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE="$REPO_ROOT/.state"; mkdir -p "$STATE"
 export KUBECONFIG="$STATE/workshop.kubeconfig"
+# Pinned, not floating. A chart release landing between a rehearsal and the
+# session would hand attendees a version nobody has run. Override with
+# KAGENT_VERSION when you deliberately want to move.
 MODEL="${RELAX_MODEL:-DeepSeek-V4-Pro}"
 BASE_URL="${RELAX_BASE_URL:-https://api.relax.ai/v1}"
 
@@ -42,7 +45,8 @@ say ""
 say "The CRDs go on first, as a separate chart -- kagent's own chart expects"
 say "them to already exist."
 run "helm upgrade --install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds \
-  --namespace kagent --create-namespace --wait --timeout 5m ${KAGENT_VERSION:+--version $KAGENT_VERSION}"
+  --namespace kagent --create-namespace --wait --timeout 5m \
+  --version '${KAGENT_VERSION:-0.10.1}'"
 
 say ""
 say "Your relax.ai key goes into a Secret. kagent reads it from there, so you"
@@ -71,7 +75,7 @@ OVERRIDE=""
 run "helm upgrade --install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
   --namespace kagent --create-namespace --wait --timeout 10m \
   --values '$HERE/values.yaml'$OVERRIDE \
-  ${KAGENT_VERSION:+--version $KAGENT_VERSION}"
+  --version '${KAGENT_VERSION:-0.10.1}'"
 
 wait_for "the kagent controller to be ready" 600 \
   "kubectl -n kagent get deploy kagent-controller -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -q '^[1-9]'"

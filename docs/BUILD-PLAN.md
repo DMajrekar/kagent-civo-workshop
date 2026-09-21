@@ -104,6 +104,27 @@ consequences for how you build it:
 
 Deliberately empty. Something above will have slipped.
 
+## Pinned versions
+
+Everything is pinned to what has actually been rehearsed. A chart release
+landing between a rehearsal and the session would hand attendees a version
+nobody has run, and CI fails if anything goes back to floating.
+
+| | Pinned to | Override |
+|---|---|---|
+| kagent, kagent-crds | 0.10.1 | `KAGENT_VERSION` |
+| loki | 6.24.0 | `LOKI_CHART_VERSION` |
+| grafana | 8.8.2 | `GRAFANA_CHART_VERSION` |
+| ingress-nginx | 4.15.1 | `INGRESS_NGINX_VERSION` |
+| cert-manager | v1.21.2 | `CERT_MANAGER_VERSION` |
+| mcp/grafana | `sha256:9362bcf6…` | `MCP_IMAGE` |
+| python | 3.12-alpine | `GENERATOR_IMAGE` |
+| nginx | 1.27-alpine | — |
+
+mcp/grafana is digest-pinned rather than tagged: it only publishes `:latest`,
+so a move would silently change the tool list an agent sees with no version
+number anywhere to explain it.
+
 ## Mon 21 Sep — freeze
 
 - [ ] No repo changes after today except typo fixes

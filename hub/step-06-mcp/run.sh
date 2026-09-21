@@ -16,7 +16,9 @@ export KUBECONFIG="$STATE/hub.kubeconfig"
 [[ -f "$KUBECONFIG" ]] || { fail "no hub kubeconfig — run 'make hub-01' first"; exit 1; }
 NS="${OBS_NAMESPACE:-observability}"
 N_TOKENS="${ATTENDEE_COUNT:-60}"   # 50 attendees plus spares
-MCP_IMAGE="${MCP_IMAGE:-mcp/grafana:latest}"
+# Digest-pinned. ":latest" moved under us would change the tool list an agent
+# sees, with no version number anywhere to explain why.
+MCP_IMAGE="${MCP_IMAGE:-mcp/grafana@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014}"
 
 banner "Hub — step 06: the MCP endpoint"
 
