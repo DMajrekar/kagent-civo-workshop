@@ -133,9 +133,10 @@ run "kubectl get agents -n kagent"
 say ""
 say "cluster-scout is still there, untouched. Re-run this step and nothing"
 say "changes — it is the same resource either way."
+# rollout status covers the Deployment; the endpoints check below covers
+# whether it is actually serving. The Agent resource's Ready condition in
+# between told us nothing the other two did not.
 run "kubectl -n kagent rollout status deploy/log-detective --timeout=180s"
-wait_for "log-detective to be ready" 300 \
-  "[[ \"\$(kubectl -n kagent get agent log-detective -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]"
 
 run "bash '$REPO_ROOT/scripts/ui.sh' start"
 UI="http://127.0.0.1:${UI_PORT:-8082}/api/a2a/kagent"

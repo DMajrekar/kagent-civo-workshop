@@ -181,15 +181,32 @@ cleanup_port_forwards() {
 
 # Poll until a command succeeds. Used so a step can be re-run safely while the
 # thing it depends on (a cluster, a rollout) is still coming up.
+# Return to the start of the line AND erase it. A bare \r only moves the
+# cursor, so a short line written over a long one leaves the long one's tail
+# visible.
+_clearline() { printf '\r\033[2K'; }
+
 wait_for() {
   local desc="$1" timeout="$2"; shift 2
   local deadline=$(( SECONDS + timeout )) spin='|/-\' i=0
-  printf '%s  waiting for %s (up to %ss)%s ' "$DIM" "$desc" "$timeout" "$RESET"
+  local tty=0; [[ -t 1 ]] && tty=1
+  # Draw the spinner only on a terminal. Redirected to a file nothing
+  # interprets \r, so the progress line and the result both survive and read
+  # as duplicated text -- which is exactly how it looked in the run logs.
+  if (( tty )); then
+    printf '%s  waiting for %s (up to %ss)%s ' "$DIM" "$desc" "$timeout" "$RESET"
+  fi
   while (( SECONDS < deadline )); do
-    if eval "$@" >/dev/null 2>&1; then printf '\r'; ok "$desc"; return 0; fi
-    printf '\b%s' "${spin:i++%4:1}"; sleep 5
+    if eval "$@" >/dev/null 2>&1; then
+      (( tty )) && _clearline
+      ok "$desc"
+      return 0
+    fi
+    (( tty )) && printf '\b%s' "${spin:i++%4:1}"
+    sleep 5
   done
-  printf '\r'; fail "timed out waiting for $desc"
+  (( tty )) && _clearline
+  fail "timed out waiting for $desc"
   return 1
 }
 

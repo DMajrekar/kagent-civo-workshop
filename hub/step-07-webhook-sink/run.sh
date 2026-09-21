@@ -167,9 +167,9 @@ if [[ -n "${RESET_CLAIMS-}" ]]; then
   warn "RESET_CLAIMS=1 — forgetting every existing claim"
   note "anyone who already downloaded a .env keeps working, but the next"
   note "claimants will be issued the same credentials over again"
+  # Deleting the file is enough: the ledger is read on every claim, not cached
+  # at startup. Restarting a pod we deployed moments ago achieved nothing.
   run "kubectl -n '$NS' exec deploy/webhook-sink -- rm -f /data/ledger.json"
-  run "kubectl -n '$NS' rollout restart deploy/webhook-sink"
-  run "kubectl -n '$NS' rollout status deploy/webhook-sink --timeout=300s"
 fi
 
 if [[ "$SINK_SVC_TYPE" == "ClusterIP" ]]; then
