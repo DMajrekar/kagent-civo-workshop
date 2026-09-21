@@ -89,7 +89,9 @@ jobs:
           on_disk = sorted(d.split('step-')[1][:2] for d in glob.glob('workshop/step-*')
                            if not d.endswith(('step-00-prework', 'step-99-cleanup')))
           src = open('scripts/rehearse.sh').read()
-          listed = re.search(r'STEPS=\(([^)]*)\)', src).group(1).split()
+          # The defaults line, not the first STEPS=( which is STEPS=("$@").
+          m = re.search(r'STEPS=\((\d[\d ]*)\)', src)
+          listed = m.group(1).split() if m else []
           if listed != on_disk:
               print(f"::error file=scripts/rehearse.sh::rehearse runs {listed} "
                     f"but the repo has {on_disk}")
