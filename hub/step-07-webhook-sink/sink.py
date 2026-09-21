@@ -163,8 +163,9 @@ def env_file(slot):
 CIVO_API_KEY=
 CIVO_REGION=lon1
 
-# Change this to something unique -- your name is fine.
-CLUSTER_NAME=kagent-{slot['name']}
+# Your cluster. Change it if you like; it only has to be unique within your
+# own Civo account.
+CLUSTER_NAME=kagent-workshop
 CIVO_NODE_SIZE=g4s.kube.medium
 CIVO_NODE_COUNT=2
 
@@ -523,7 +524,29 @@ label{color:var(--dim);font-size:.88rem}
 
 <script>
 const f=document.getElementById("f"), out=document.getElementById("out");
-try{const n=localStorage.getItem("workshop-name"); if(n) document.getElementById("name").value=n;}catch(e){}
+// A remembered name is what gives someone their credentials back on a reload
+// or a second device. Show that it is remembered rather than just pre-filling
+// the box, so a throwaway name does not get reused without anyone noticing.
+try{
+  const n=localStorage.getItem("workshop-name");
+  if(n){
+    const box=document.getElementById("name");
+    box.value=n;
+    const hint=document.createElement("span");
+    hint.className="sub";
+    hint.style.cssText="display:block;font-size:.82rem;margin-top:4px";
+    hint.textContent="Remembered from last time. ";
+    const clear=document.createElement("a");
+    clear.href="#"; clear.textContent="Not you? Start fresh.";
+    clear.onclick=ev=>{
+      ev.preventDefault();
+      try{localStorage.removeItem("workshop-name");localStorage.removeItem("workshop-code");}catch(e){}
+      box.value=""; hint.remove(); box.focus();
+    };
+    hint.append(clear);
+    box.parentNode.parentNode.appendChild(hint);
+  }
+}catch(e){}
 f.onsubmit=async ev=>{
   ev.preventDefault();
   out.textContent="";
