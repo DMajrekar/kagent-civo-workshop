@@ -37,6 +37,8 @@ SECRETS_DIR = os.environ.get("SECRETS_DIR", "/secrets")
 LEDGER_PATH = os.environ.get("LEDGER_PATH", "/data/ledger.json")
 MCP_ENDPOINT = os.environ.get("MCP_ENDPOINT", "").strip()
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "").strip()
+GRAFANA_URL = os.environ.get("GRAFANA_URL", "").strip()
+REPO_URL = os.environ.get("REPO_URL", "https://github.com/DMajrekar/kagent-civo-workshop").strip()
 JOIN_ATTEMPTS_PER_MIN = 12
 
 LOCK = threading.Lock()
@@ -242,64 +244,68 @@ def page(title, body):
 <body><div class="wrap">{body}</div></body></html>"""
 
 
-LANDING = page("Workshop report wall", """
-<h1>Your report inbox</h1>
-<p class="sub">Your agent's daily report lands here. Keep this page — it is yours.</p>
-<div id="out"></div>
+def landing_page():
+    """The QR code target: everything anyone needs, on one screen."""
+    graf = (f'<a class="card" href="{html.escape(GRAFANA_URL)}" target="_blank" rel="noopener">'
+            f'<span class="k">The logs</span>'
+            f'<span class="d">Grafana and Loki, read-only. The same seven days your '
+            f'agent can see — go and find something in it yourself.</span></a>'
+            if GRAFANA_URL else "")
+    return page("Workshop links", f"""
+<h1>kagent on Civo</h1>
+<p class="sub">Everything you need, in the order you need it.</p>
+
+<div class="cards">
+  <a class="card go" href="/join">
+    <span class="k">1 &middot; Get your credentials</span>
+    <span class="d">Passphrase from the slides, then download a ready-made
+    <code>.env</code>. Start here.</span>
+  </a>
+
+  <a class="card" href="{html.escape(REPO_URL)}" target="_blank" rel="noopener">
+    <span class="k">2 &middot; The repo</span>
+    <span class="d">Clone it, then <code>make doctor</code>. Every step is a
+    <code>make</code> target.</span>
+  </a>
+
+  <a class="card" id="inbox" href="/" hidden>
+    <span class="k">3 &middot; Your report inbox</span>
+    <span class="d">Your progress through the workshop, and the reports your
+    agent posts. Code: <code class="mycode"></code></span>
+  </a>
+
+  {graf}
+
+  <a class="card" href="/wall">
+    <span class="k">The wall</span>
+    <span class="d">Everyone's reports as they land. This one is usually on the
+    projector.</span>
+  </a>
+</div>
+
+<style>
+.cards{{display:flex;flex-direction:column;gap:10px;margin-top:22px}}
+.card{{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;
+      padding:15px 17px;text-decoration:none;color:inherit;transition:border-color .15s}}
+.card:hover{{border-color:var(--accent)}}
+.card .k{{display:block;font-weight:600;font-size:.98rem;margin-bottom:3px}}
+.card .d{{display:block;color:var(--dim);font-size:.86rem;line-height:1.45}}
+.card.go{{border-color:var(--accent);border-width:1.5px}}
+.card.go .k{{color:var(--accent)}}
+</style>
+
 <script>
-const ADJ=%s, NOUN=%s;
-function mint(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+NOUN[Math.floor(Math.random()*NOUN.length)];}
-let code=null;
-try{code=localStorage.getItem("workshop-code");}catch(e){}
-if(!code){code=mint();try{localStorage.setItem("workshop-code",code);}catch(e){}}
-const url=location.origin+"/hook/"+code;
-const out=document.getElementById("out");
-const h=document.createElement("div");
-h.innerHTML='<div class="code"></div>'+
- '<p class="sub" style="margin:6px 0 14px">Put this in your <code>.env</code> as <code>REPORT_WEBHOOK_URL</code>:</p>'+
- '<div class="url"></div>';
-h.querySelector(".code").textContent=code;
-h.querySelector(".url").textContent=url;
-const b=document.createElement("button");
-b.textContent="Copy URL";
-b.onclick=()=>{navigator.clipboard.writeText(url).then(()=>{b.textContent="Copied";setTimeout(()=>b.textContent="Copy URL",1500);});};
-const v=document.createElement("button");
-v.textContent="Open my inbox";v.style.marginLeft="8px";
-v.onclick=()=>{location.href="/c/"+code;};
-out.append(h,b,v);
-</script>""" % (json.dumps(ADJECTIVES), json.dumps(NOUNS)))
-
-
-# What each step looks like when it has actually worked. These are the real
-# assertions the scripts print, so ticking a box means something -- a checklist
-# of "did you run it" would tell an attendee nothing they did not already know.
-STEPS = [
-    ("01", "Create your cluster", "make step-01",
-     "Cluster creation is under way. It keeps building while you listen."),
-    ("02", "Install kagent", "make step-02",
-     "kagent is running and knows how to reach relax.ai."),
-    ("03", "Your first agent", "make step-03",
-     "Two agents answered a question about your own cluster."),
-    ("04", "Seven days of logs", "make step-04",
-     "Your agent listed all eight services from the workshop platform."),
-    ("05", "A report every morning", "make step-05",
-     "A report appeared below. This one ticks itself."),
-    ("06", "Make it yours", "make step-06",
-     "Your cluster no longer depends on the workshop hub."),
-]
-
-
-def steps_markup():
-    rows = []
-    for num, title, cmd, done_when in STEPS:
-        rows.append(
-            f'<li class="step" data-step="{html.escape(num)}">'
-            f'<button class="tick" type="button" aria-pressed="false" '
-            f'aria-label="Mark step {html.escape(num)} done"></button>'
-            f'<div class="what"><span class="st">{html.escape(title)}</span>'
-            f'<code>{html.escape(cmd)}</code>'
-            f'<span class="when">{html.escape(done_when)}</span></div></li>')
-    return "".join(rows)
+// Only show the inbox card once they have actually claimed a code.
+try{{
+  const c=localStorage.getItem("workshop-code");
+  if(c){{
+    const a=document.getElementById("inbox");
+    a.href="/c/"+c;
+    a.querySelector(".mycode").textContent=c;
+    a.hidden=false;
+  }}
+}}catch(e){{}}
+</script>""")
 
 
 def inbox_page(code):
@@ -664,7 +670,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/healthz":
             return self._send(200, "ok\n", "text/plain")
         if p == "/":
-            return self._send(200, LANDING)
+            return self._send(200, landing_page())
         if p == "/wall":
             return self._send(200, WALL)
         if p == "/join":

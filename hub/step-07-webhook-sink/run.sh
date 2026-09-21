@@ -45,6 +45,21 @@ PASSPHRASE="$(cat "$PASS_FILE")"
 
 # hub-08 rewrites the MCP endpoint with an https URL; a re-run picks that up.
 MCP_URL="$(cat "$STATE/mcp-endpoint" 2>/dev/null || true)"
+# Prefer the live ingress over the state file: the file is written by hub-08,
+# and depending on step ordering for it means the links page quietly loses a
+# card if the steps ran in a different sequence.
+GRAF_URL="${GRAFANA_URL:-}"
+if [[ -z "$GRAF_URL" ]]; then
+  GRAF_HOST_LIVE=$(kubectl -n "$NS" get ingress grafana -o jsonpath='{.spec.rules[0].host}' 2>/dev/null || true)
+  if [[ -n "$GRAF_HOST_LIVE" ]]; then
+    GRAF_URL="https://${GRAF_HOST_LIVE}"
+    echo "$GRAF_URL" > "$STATE/grafana-endpoint"
+  else
+    GRAF_URL="$(cat "$STATE/grafana-endpoint" 2>/dev/null || true)"
+  fi
+fi
+[[ -z "$GRAF_URL" ]] && note "no Grafana ingress yet — the links page will omit that card"
+REPO_URL_VAL="${REPO_URL:-https://github.com/DMajrekar/kagent-civo-workshop}"
 
 # PUBLIC_URL is this service's own address, which it does not know yet on a
 # first LoadBalancer run. Resolve what we can now and reconcile after apply --
@@ -113,6 +128,8 @@ spec:
             - { name: LEDGER_PATH, value: "/data/ledger.json" }
             - { name: MCP_ENDPOINT, value: "${MCP_URL}" }
             - { name: PUBLIC_URL, value: "${PUB_URL}" }
+            - { name: GRAFANA_URL, value: "${GRAF_URL}" }
+            - { name: REPO_URL, value: "${REPO_URL_VAL}" }
             - name: JOIN_PASSPHRASE
               valueFrom:
                 secretKeyRef: { name: workshop-credentials, key: join-passphrase }
@@ -230,7 +247,8 @@ fi
 
 printf '\n'
 ok "The wall is live."
-note "credentials: $SINK_URL/join     <- this goes on your slides"
+note "links page: $SINK_URL     <- this is the QR code target for your slides"
+note "credentials: $SINK_URL/join"
 note "passphrase:  $PASSPHRASE"
 note "how many have claimed:"
 note "  curl -sS -XPOST $SINK_URL/api/claims -H 'Content-Type: application/json' \\"

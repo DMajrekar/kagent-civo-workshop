@@ -112,8 +112,15 @@ def incidents(rng, svc, ts, age_days, end_ts):
         ver = "v2.3.1" if deployed else "v2.3.0"
         if deployed and abs(age_days - 4.0) < 0.005:
             out.append(("info", "starting checkout v2.3.1 (build 8812)", {"version": ver}))
-        if deployed and rng.random() < 0.085:
+        # Has to be a step change you cannot miss. At 8.5% the post-deploy rate
+        # was only ~2.6x baseline, which passed or failed depending on how long
+        # live generation had been topping up the recent window -- too fragile
+        # for the incident the session opens with.
+        if deployed and rng.random() < 0.22:
             out.append(("error", fmt(rng, "payment gateway call failed order={id}: 502 upstream timeout"),
+                        {"version": ver}))
+        if deployed and rng.random() < 0.08:
+            out.append(("warn", fmt(rng, "payment gateway slow order={id} {ms}ms (threshold 2000ms)"),
                         {"version": ver}))
         return [(lvl, msg, {**lbl, "version": ver}) for lvl, msg, lbl in out] or \
                [("__label__", "", {"version": ver})]
