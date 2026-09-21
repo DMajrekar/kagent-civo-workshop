@@ -24,8 +24,47 @@ say ""
 say "The connection is MCP -- the same protocol kagent uses for its own tools,"
 say "except this server is somewhere else entirely."
 
+# Preflight before the MCP handshake. A stale or unreachable endpoint otherwise
+# surfaces as a 60-second hang and "URLError: timed out", which tells an
+# attendee nothing about what to do next.
 say ""
 say "First, check the endpoint answers before asking an agent to depend on it."
+say ""
+
+if [[ "$MCP_URL" != https://* ]]; then
+  warn "MCP_ENDPOINT is not https: $MCP_URL"
+  note "The workshop endpoint is https. A plain http:// address usually means an"
+  note "old .env from before the endpoint moved. Get a fresh one from the"
+  note "credentials page on the slides."
+fi
+
+# Short timeout on purpose: if it is not there, say so in seconds, not minutes.
+PRE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+        -XPOST "$MCP_URL" -H 'Content-Type: application/json' -d '{}' 2>&1) || PRE="unreachable"
+case "$PRE" in
+  401)
+    ok "endpoint is there and asking for a token — as it should"
+    ;;
+  200|400|406)
+    note "endpoint answered ($PRE)"
+    ;;
+  *)
+    fail "cannot reach the MCP endpoint: $MCP_URL"
+    printf '\n'
+    note "curl said: $PRE"
+    note ""
+    note "Almost always one of:"
+    note "  · your .env is from an earlier session and the endpoint has moved"
+    note "  · you are on a network that blocks it — try a phone hotspot"
+    note "  · the hub is down; check with whoever is running the workshop"
+    note ""
+    note "The fix is usually a fresh .env from the credentials page on the slides."
+    note "Your current value is:"
+    note "  MCP_ENDPOINT=$MCP_URL"
+    exit 1
+    ;;
+esac
+say ""
 # --token is read from the environment so the displayed command does not carry
 # a live credential; this is on a screenshare.
 printf '\n%s%s$ python3 scripts/mcp-probe.py %s --token $MCP_TOKEN%s\n\n' \
