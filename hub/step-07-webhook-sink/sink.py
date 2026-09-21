@@ -308,6 +308,36 @@ try{{
 </script>""")
 
 
+# What each step looks like when it has actually worked. These are the real
+# assertions the scripts print, so ticking a box means something -- a checklist
+# of "did you run it" would tell an attendee nothing they did not already know.
+STEPS = [
+    ("01", "Create your cluster", "make step-01",
+     "Cluster creation is under way. It keeps building while you listen."),
+    ("02", "Install kagent", "make step-02",
+     "kagent is running and knows how to reach relax.ai."),
+    ("03", "Your first agent", "make step-03",
+     "cluster-scout answered a question about your own cluster."),
+    ("04", "Seven days of logs", "make step-04",
+     "log-detective listed all eight services from the workshop platform."),
+    ("05", "Put it on a schedule", "make step-05",
+     "A report appeared below. This one ticks itself."),
+]
+
+
+def steps_markup():
+    rows = []
+    for num, title, cmd, done_when in STEPS:
+        rows.append(
+            f'<li class="step" data-step="{html.escape(num)}">'
+            f'<button class="tick" type="button" aria-pressed="false" '
+            f'aria-label="Mark step {html.escape(num)} done"></button>'
+            f'<div class="what"><span class="st">{html.escape(title)}</span>'
+            f'<code>{html.escape(cmd)}</code>'
+            f'<span class="when">{html.escape(done_when)}</span></div></li>')
+    return "".join(rows)
+
+
 def inbox_page(code):
     return page(f"Inbox — {code}", """
 <h1>{{CODE}}</h1>
@@ -317,7 +347,7 @@ nothing here is sent anywhere.</p>
 <section class="prog">
   <div class="phead">
     <h2>Where you are</h2>
-    <span class="count" id="count">0 of 6</span>
+    <span class="count" id="count">0 of {{NSTEPS}}</span>
   </div>
   <div class="bar"><span id="fill"></span></div>
   <ol class="steps" id="steps">{{STEPS}}</ol>
@@ -428,6 +458,7 @@ poll();setInterval(poll,5000);
 </script>"""
             .replace("{{CODE}}", html.escape(code))
             .replace("{{STEPS}}", steps_markup())
+            .replace("{{NSTEPS}}", str(len(STEPS)))
             .replace("{{CODE_JSON}}", json.dumps(code)))
 
 

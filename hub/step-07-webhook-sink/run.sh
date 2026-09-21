@@ -234,7 +234,26 @@ fi
 ok "the wall page contains no injected markup (bodies render via textContent)"
 
 say ""
-say "4. The credential handout refuses a wrong passphrase."
+say "4. Every page renders. A 200 on the landing page says nothing about the"
+say "others -- each is built by its own function, and one of them throwing is"
+say "a 502 on that page alone."
+BADPAGE=0
+for P in / /join /wall "/c/smoke-render-check" /api/wall "/api/c/smoke-render-check"; do
+  PC=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$SINK_URL$P" || echo 000)
+  if [[ "$PC" == "200" ]]; then
+    printf '  %s%s✓%s %-30s %s\n' "$BOLD" "$GREEN" "$RESET" "$P" "$PC"
+  else
+    printf '  %s%s✗%s %-30s %s\n' "$BOLD" "$RED" "$RESET" "$P" "$PC"; BADPAGE=1
+  fi
+done
+if (( BADPAGE )); then
+  fail "a page is not rendering"
+  note "kubectl -n $NS logs -l app=webhook-sink --tail=40"
+  exit 1
+fi
+
+say ""
+say "5. The credential handout refuses a wrong passphrase."
 JCODE=$(curl -sS -o /dev/null -w '%{http_code}' -XPOST "$SINK_URL/api/join" \
   -H 'Content-Type: application/json' -d '{"passphrase":"definitely-wrong","name":"probe"}' || echo 000)
 if [[ "$NKEYS" -eq 0 ]]; then
