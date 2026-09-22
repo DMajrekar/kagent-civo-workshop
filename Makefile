@@ -78,8 +78,13 @@ hub-%:
 # ------------------------------------------------------------------ sequences
 
 all:
-	@for s in $(WORKSHOP_STEPS); do \
+	@first=1; \
+	for s in $(WORKSHOP_STEPS); do \
 	  case "$$s" in *step-99-*) continue;; esac; \
+	  if [ -z "$$first" ] && [ -t 0 ] && [ -z "$$DEMO_AUTO" ]; then \
+	    printf '\n\033[2m  [enter] next step\033[0m'; read -r _ </dev/tty || true; \
+	  fi; \
+	  first=; \
 	  bash workshop/$$s/run.sh || exit $$?; \
 	done
 

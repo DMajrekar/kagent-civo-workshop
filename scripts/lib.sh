@@ -79,6 +79,16 @@ _width() {
 
 banner() {
   local w; w=$(_width)
+  # Start each step on a clean screen. `make all` otherwise scrolls one wall of
+  # text past the room and the step you are on is lost in the middle of it.
+  #
+  # \033[H\033[2J homes the cursor and clears the visible screen but leaves the
+  # scrollback intact, so anyone who wants the previous step can still scroll
+  # up. Only on a terminal -- in a log file these are just noise. NO_CLEAR=1
+  # turns it off.
+  if [[ -t 1 && -z "${NO_CLEAR-}" ]]; then
+    printf '\033[H\033[2J'
+  fi
   printf '\n%s%s%s%s\n' "$BOLD" "$BLUE" "$(printf '%*s' "$w" '' | tr ' ' '=')" "$RESET"
   printf '%s%s  %s%s\n' "$BOLD" "$BLUE" "$*" "$RESET"
   printf '%s%s%s%s\n\n' "$BOLD" "$BLUE" "$(printf '%*s' "$w" '' | tr ' ' '=')" "$RESET"
