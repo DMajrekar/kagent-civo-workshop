@@ -260,8 +260,8 @@ def page(title, body):
 
 def landing_page():
     """The QR code target: everything anyone needs, on one screen."""
-    graf = (f'<a class="card" href="{html.escape(GRAFANA_URL)}" target="_blank" rel="noopener">'
-            f'<span class="k">The logs</span>'
+    graf = (f'<a class="card go" href="{html.escape(GRAFANA_URL)}" target="_blank" rel="noopener">'
+            f'<span class="k">1 &middot; The logs</span>'
             f'<span class="d">Grafana and Loki, read-only. The same seven days your '
             f'agent can see — go and find something in it yourself.</span></a>'
             if GRAFANA_URL else "")
@@ -270,25 +270,25 @@ def landing_page():
 <p class="sub">Everything you need, in the order you need it.</p>
 
 <div class="cards">
-  <a class="card go" href="/join">
-    <span class="k">1 &middot; Get your credentials</span>
+  {graf}
+
+  <a class="card" href="/join">
+    <span class="k">2 &middot; Get your credentials</span>
     <span class="d">Passphrase from the slides, then download a ready-made
-    <code>.env</code>. Start here.</span>
+    <code>.env</code>.</span>
   </a>
 
   <a class="card" href="{html.escape(REPO_URL)}" target="_blank" rel="noopener">
-    <span class="k">2 &middot; The repo</span>
+    <span class="k">3 &middot; The repo</span>
     <span class="d">Clone it, then <code>make doctor</code>. Every step is a
     <code>make</code> target.</span>
   </a>
 
   <a class="card" id="inbox" href="/" hidden>
-    <span class="k">3 &middot; Your report inbox</span>
+    <span class="k">4 &middot; Your report inbox</span>
     <span class="d">Your progress through the workshop, and the reports your
     agent posts. Code: <code class="mycode"></code></span>
   </a>
-
-  {graf}
 
   <a class="card" href="/wall">
     <span class="k">The wall</span>
