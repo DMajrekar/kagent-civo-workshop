@@ -279,16 +279,17 @@ def landing_page():
 
   {graf}
 
-  <a class="card" href="/join">
-    <span class="k">3 &middot; Get your credentials</span>
-    <span class="d">Passphrase from the slides, then download a ready-made
-    <code>.env</code>.</span>
+  <a class="card" href="{html.escape(REPO_URL)}" target="_blank" rel="noopener">
+    <span class="k">3 &middot; Clone the repo</span>
+    <span class="d">Every step of the workshop is a <code>make</code> target in
+    here. Clone it somewhere you can find again.</span>
   </a>
 
-  <a class="card" href="{html.escape(REPO_URL)}" target="_blank" rel="noopener">
-    <span class="k">4 &middot; The repo</span>
-    <span class="d">Clone it, then <code>make doctor</code>. Every step is a
-    <code>make</code> target.</span>
+  <a class="card" href="/join">
+    <span class="k">4 &middot; Get your .env</span>
+    <span class="d">Passphrase from the slides, then download a ready-made
+    <code>.env</code> and save it inside the repo you just cloned. Then
+    <code>make doctor</code>.</span>
   </a>
 
   <a class="card" id="inbox" href="/" hidden>
@@ -297,11 +298,6 @@ def landing_page():
     agent posts. Code: <code class="mycode"></code></span>
   </a>
 
-  <a class="card" href="/wall">
-    <span class="k">The wall</span>
-    <span class="d">Everyone's reports as they land. This one is usually on the
-    projector.</span>
-  </a>
 </div>
 
 <style>
