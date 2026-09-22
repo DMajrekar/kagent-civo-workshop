@@ -63,6 +63,24 @@ When you're done with it:
 make clean
 ```
 
+## Turning the daily report on
+
+Step 05 ran the report once and showed you the CronJob that would run it every
+morning, but deliberately did not apply it. To switch it on:
+
+```bash
+kubectl apply -f .state/report-cronjob.yaml
+```
+
+Two things worth changing first:
+
+- **The time.** It defaults to 07:00 daily. Regenerate it on a different
+  schedule with `REPORT_SCHEDULE='0 9 * * 1' make step-05` — that is Mondays at
+  09:00, and a weekly digest people read beats a daily one they stop opening.
+- **The question.** Edit `PROMPT` in `workshop/step-05-report/report.py`. The
+  default asks for errors in the last 24 hours; yours probably wants something
+  more specific.
+
 ## Prompts worth stealing
 
 The workshop prompts were tuned to a dataset you no longer have. These are the
