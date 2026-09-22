@@ -130,6 +130,20 @@ run_quiet "kubectl -n '$NS' create configmap mcp-proxy-conf \
   --from-file=proxy.conf='$STATE/mcp-proxy.conf' \
   --dry-run=client -o yaml | kubectl apply -f -"
 
+# If hub-08 has already fronted this with an ingress, do not hand it back a
+# LoadBalancer of its own. Re-running this step afterwards would otherwise
+# resurrect a billing Civo LB, reopen an unencrypted way in, and overwrite
+# .state/mcp-endpoint with a plain-http address that the credential handout
+# then issues to everyone.
+if MCP_ING_HOST=$(kubectl -n "$NS" get ingress mcp -o jsonpath='{.spec.rules[0].host}' 2>/dev/null) \
+   && [[ -n "$MCP_ING_HOST" ]]; then
+  MCP_SVC_TYPE=ClusterIP
+  note "ingress 'mcp' exists — keeping the Service internal and using https://$MCP_ING_HOST"
+else
+  MCP_SVC_TYPE=LoadBalancer
+  MCP_ING_HOST=""
+fi
+
 cat > "$STATE/mcp.yaml" <<YAML
 apiVersion: apps/v1
 kind: Deployment
@@ -233,7 +247,7 @@ apiVersion: v1
 kind: Service
 metadata: { name: mcp-public, namespace: ${NS} }
 spec:
-  type: LoadBalancer
+  type: ${MCP_SVC_TYPE}
   selector: { app: mcp-proxy }
   ports: [{ name: http, port: 80, targetPort: 8080 }]
 YAML
@@ -242,10 +256,15 @@ run "kubectl apply -f '$STATE/mcp.yaml'"
 run "kubectl -n '$NS' rollout status deploy/mcp-grafana --timeout=300s"
 run "kubectl -n '$NS' rollout status deploy/mcp-proxy   --timeout=300s"
 
-wait_for "LoadBalancer to get an address" 600 \
-  "[[ -n \"\$(kubectl -n '$NS' get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')\" ]]"
-LB_IP=$(kubectl -n "$NS" get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-MCP_URL="http://${LB_IP}/mcp"
+if [[ "$MCP_SVC_TYPE" == "ClusterIP" ]]; then
+  MCP_URL="https://${MCP_ING_HOST}/mcp"
+  LB_IP="$MCP_ING_HOST"
+else
+  wait_for "LoadBalancer to get an address" 600 \
+    "[[ -n \"\$(kubectl -n '$NS' get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')\" ]]"
+  LB_IP=$(kubectl -n "$NS" get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  MCP_URL="http://${LB_IP}/mcp"
+fi
 echo "$MCP_URL" > "$STATE/mcp-endpoint"
 ok "MCP endpoint: $MCP_URL"
 
@@ -257,7 +276,8 @@ say "handshake, and check the auth boundary in both directions."
 
 FIRST_TOKEN=$(awk 'NR==1{print $2}' "$TOKENS_FILE")
 
-wait_for "endpoint to answer" 300 "curl -sf -o /dev/null 'http://${LB_IP}/healthz'"
+HEALTH_BASE="${MCP_URL%/mcp}"
+wait_for "endpoint to answer" 300 "curl -sf -o /dev/null '$HEALTH_BASE/healthz'"
 
 say ""
 say "1. No token must be refused."
@@ -283,9 +303,13 @@ MCP_TOKEN="$FIRST_TOKEN" run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_UR
 
 printf '\n'
 ok "The MCP endpoint is live and authenticated."
+if [[ "$MCP_URL" == https://* ]]; then
+  ok "served over TLS via the ingress"
+else
 warn "This is plain HTTP — bearer tokens cross the internet in clear text."
 note "hub-08 puts TLS in front of it. Run that before handing the endpoint to"
 note "anyone; do not print this URL on a workshop card."
+fi
 note "endpoint: $MCP_URL"
 note "tokens:   $TOKENS_FILE"
 note "next:  make hub-07   (the webhook wall), then hub-08 (TLS)"
