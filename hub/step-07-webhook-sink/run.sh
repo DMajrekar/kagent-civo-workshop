@@ -272,8 +272,12 @@ note "passphrase:  $PASSPHRASE"
 note "how many have claimed:"
 note "  curl -sS -XPOST $SINK_URL/api/claims -H 'Content-Type: application/json' \\"
 note "    -d '{\"passphrase\":\"$PASSPHRASE\"}' | jq"
-if [[ "$NKEYS" -gt 0 && "$NKEYS" -lt 25 ]]; then
-  warn "only $NKEYS key(s) in the pool — attendees beyond that will share."
+if [[ "$NKEYS" -eq 1 ]]; then
+  note "one key in the pool — every attendee gets it. That is a supported setup;"
+  note "nobody is told they are sharing, and each still gets their own MCP token"
+  note "and report inbox."
+elif [[ "$NKEYS" -gt 1 && "$NKEYS" -lt 25 ]]; then
+  warn "only $NKEYS keys in the pool — attendees beyond that will share one."
   note "add the rest to $KEYS_FILE and re-run; existing claims are kept."
 fi
 note "attendees:   $SINK_URL"
