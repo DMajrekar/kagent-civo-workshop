@@ -325,120 +325,19 @@ try{{
 </script>""")
 
 
-# What each step looks like when it has actually worked. These are the real
-# assertions the scripts print, so ticking a box means something -- a checklist
-# of "did you run it" would tell an attendee nothing they did not already know.
-STEPS = [
-    ("01", "Create your cluster", "make step-01",
-     "Cluster creation is under way. It keeps building while you listen."),
-    ("02", "Install kagent", "make step-02",
-     "kagent is running and knows how to reach relax.ai."),
-    ("03", "Your first agent", "make step-03",
-     "cluster-scout answered a question about your own cluster."),
-    ("04", "Seven days of logs", "make step-04",
-     "log-detective listed all eight services from the workshop platform."),
-    ("05", "Put it on a schedule", "make step-05",
-     "A report appeared below. This one ticks itself."),
-]
-
-
-def steps_markup():
-    rows = []
-    for num, title, cmd, done_when in STEPS:
-        rows.append(
-            f'<li class="step" data-step="{html.escape(num)}">'
-            f'<button class="tick" type="button" aria-pressed="false" '
-            f'aria-label="Mark step {html.escape(num)} done"></button>'
-            f'<div class="what"><span class="st">{html.escape(title)}</span>'
-            f'<code>{html.escape(cmd)}</code>'
-            f'<span class="when">{html.escape(done_when)}</span></div></li>')
-    return "".join(rows)
-
-
 def inbox_page(code):
     return page(f"Inbox — {code}", """
 <h1>{{CODE}}</h1>
-<p class="sub">Your progress and your reports. Both live in this browser —
-nothing here is sent anywhere.</p>
+<p class="sub">Reports from your agent appear here. They are kept in this
+browser — nothing on this page is sent anywhere.</p>
 
-<section class="prog">
-  <div class="phead">
-    <h2>Where you are</h2>
-    <span class="count" id="count">0 of {{NSTEPS}}</span>
-  </div>
-  <div class="bar"><span id="fill"></span></div>
-  <ol class="steps" id="steps">{{STEPS}}</ol>
-  <p class="sub" style="font-size:.82rem;margin:14px 0 0">
-    Behind? Don't catch up — run the step everyone else is on. Each one stands
-    on its own.</p>
-</section>
-
-<h2 class="rh">Reports</h2>
 <div id="list"><div class="empty">Nothing yet. Trigger your report job and it will show up.</div></div>
 
 <style>
-.prog{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;margin:22px 0 30px}
-.phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.prog h2,.rh{font-size:.95rem;margin:0;letter-spacing:-.01em}
-.rh{margin:0 0 4px}
-.count{color:var(--dim);font-size:.82rem;font-variant-numeric:tabular-nums}
-.bar{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0 16px}
-.bar span{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease}
-.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.step{display:flex;gap:12px;align-items:flex-start;padding:9px 4px;border-top:1px solid var(--line)}
-.step:first-child{border-top:0}
-.tick{flex:0 0 auto;width:19px;height:19px;margin-top:2px;padding:0;border-radius:6px;
-      border:1.5px solid var(--line);background:transparent;cursor:pointer;position:relative}
-.tick:hover{border-color:var(--accent)}
-.tick[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
-.tick[aria-pressed="true"]::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;
-      border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
-.what{display:flex;flex-direction:column;gap:3px;min-width:0}
-.st{font-weight:600;font-size:.9rem}
-.what code{font-size:.8rem;color:var(--accent)}
-.when{color:var(--dim);font-size:.8rem}
-.step.done .st,.step.done .when{opacity:.5}
-.step.done .st{text-decoration:line-through;text-decoration-thickness:1px}
-.step.auto .tick{cursor:default}
-@media(prefers-reduced-motion:reduce){.bar span{transition:none}}
 </style>
 
 <script>
 const CODE={{CODE_JSON}}, KEY="workshop-archive-"+CODE, PKEY="workshop-progress-"+CODE;
-// ---- progress -------------------------------------------------------------
-function loadProg(){try{return JSON.parse(localStorage.getItem(PKEY)||"[]");}catch(e){return [];}}
-function saveProg(a){try{localStorage.setItem(PKEY,JSON.stringify(a));}catch(e){}}
-let prog=loadProg();
-const stepsEl=document.getElementById("steps");
-
-function paintProg(){
-  const items=[...stepsEl.querySelectorAll(".step")];
-  let n=0;
-  for(const li of items){
-    const on=prog.includes(li.dataset.step);
-    if(on) n++;
-    li.classList.toggle("done",on);
-    li.querySelector(".tick").setAttribute("aria-pressed",on?"true":"false");
-  }
-  document.getElementById("count").textContent=n+" of "+items.length;
-  document.getElementById("fill").style.width=(n/items.length*100)+"%";
-}
-stepsEl.addEventListener("click",ev=>{
-  const b=ev.target.closest(".tick"); if(!b) return;
-  const li=b.closest(".step");
-  if(li.classList.contains("auto")) return;      // step 05 ticks itself
-  const id=li.dataset.step;
-  prog = prog.includes(id) ? prog.filter(x=>x!==id) : prog.concat([id]);
-  saveProg(prog); paintProg();
-});
-function autoTick(id){
-  const li=stepsEl.querySelector('.step[data-step="'+id+'"]');
-  if(li) li.classList.add("auto");
-  if(!prog.includes(id)){ prog=prog.concat([id]); saveProg(prog); }
-  paintProg();
-}
-paintProg();
-
 // ---- reports --------------------------------------------------------------
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||"[]");}catch(e){return [];}}
 function save(a){try{localStorage.setItem(KEY,JSON.stringify(a.slice(-60)));}catch(e){}}
@@ -467,15 +366,12 @@ render(archive);
 async function poll(){
   try{const r=await fetch("/api/c/"+CODE);const live=(await r.json()).items||[];
     archive=merge(archive,live);save(archive);render(archive);
-    // A report arriving is real evidence step 05 worked, so tick it.
-    if(archive.length) autoTick("05");
   }catch(e){}
 }
 poll();setInterval(poll,5000);
 </script>"""
             .replace("{{CODE}}", html.escape(code))
-            .replace("{{STEPS}}", steps_markup())
-            .replace("{{NSTEPS}}", str(len(STEPS)))
+
             .replace("{{CODE_JSON}}", json.dumps(code)))
 
 
