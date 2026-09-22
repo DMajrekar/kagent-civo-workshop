@@ -60,6 +60,7 @@ if [[ -z "$GRAF_URL" ]]; then
 fi
 [[ -z "$GRAF_URL" ]] && note "no Grafana ingress yet — the links page will omit that card"
 REPO_URL_VAL="${REPO_URL:-https://github.com/DMajrekar/kagent-civo-workshop}"
+SIGNUP_URL_VAL="${SIGNUP_URL:-https://www.civo.com/seminar-signup}"
 
 # PUBLIC_URL is this service's own address, which it does not know yet on a
 # first LoadBalancer run. Resolve what we can now and reconcile after apply --
@@ -130,6 +131,7 @@ spec:
             - { name: PUBLIC_URL, value: "${PUB_URL}" }
             - { name: GRAFANA_URL, value: "${GRAF_URL}" }
             - { name: REPO_URL, value: "${REPO_URL_VAL}" }
+            - { name: SIGNUP_URL, value: "${SIGNUP_URL_VAL}" }
             - name: JOIN_PASSPHRASE
               valueFrom:
                 secretKeyRef: { name: workshop-credentials, key: join-passphrase }
