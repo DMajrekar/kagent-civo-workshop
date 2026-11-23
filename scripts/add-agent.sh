@@ -11,6 +11,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 export KUBECONFIG="$REPO_ROOT/.state/hub.kubeconfig"
+cd "$REPO_ROOT"
 [[ -f "$KUBECONFIG" ]] || { fail "no hub kubeconfig — run 'make hub-01' first"; exit 1; }
 
 if [[ "${1-}" == "--clear" ]]; then
@@ -31,14 +32,22 @@ NAME="$(sed -n 's/^  name: //p' "$F" | head -1)"
 
 # Comments stripped: the file's header is a note to the presenter, and the
 # room should be reading the spec.
-printf '\n%s# agents/%s%s\n' "$DIM" "$(basename "$F")" "$RESET"
-grep -v '^\s*#' "$F"
-printf '\n'
+# Not when recording: the manifest is longer than the recorded screen, and the
+# slide before the recording already shows the part of it that matters.
+if [[ -z "${DEMO_CLEAR_SECTIONS-}" ]]; then
+  printf '\n%s# agents/%s%s\n' "$DIM" "$(basename "$F")" "$RESET"
+  grep -v '^\s*#' "$F"
+  printf '\n'
+else
+  banner "kagent — agent $N: $NAME"
+fi
 
-kubectl apply -f "$F"
+[[ -n "${DEMO_AUTO-}" ]] && sleep "${DEMO_PACE:-0}"
+run "kubectl apply -f agents/$(basename "$F")"
 wait_for "$NAME to be ready" 240 \
   "[[ \"\$(kubectl -n kagent get agent '$NAME' -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' 2>/dev/null)\" == 'True' ]]" \
   || { kubectl -n kagent get agent "$NAME" \
          -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.message}{"\n"}{end}'; exit 1; }
 
+run "kubectl -n kagent get agent $NAME"
 ok "$NAME is live — it is on every player's page now"

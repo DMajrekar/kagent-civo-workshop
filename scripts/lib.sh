@@ -8,6 +8,10 @@
 #                 unattended, and in CI -- if it passes with DEMO_AUTO=1 it
 #                 will not surprise you on stage)
 #   DEMO_NARROW=1 wrap narration at 72 cols instead of terminal width
+#   DEMO_PACE=2   with DEMO_AUTO, hold each command on screen for this many
+#                 seconds before running it (scripts/record.sh sets this)
+#   DEMO_CLEAR_SECTIONS=1  clear the screen at each `say ""`, so a recording
+#                 shows one section of a step at a time
 
 set -euo pipefail
 
@@ -95,7 +99,15 @@ banner() {
 }
 
 # A narration paragraph -- what you say while the slide is up.
-say()  { printf '%s\n' "$*" | fold -s -w "$(_width)"; }
+# say "" is the section separator in the step scripts. When recording
+# (DEMO_CLEAR_SECTIONS=1) it pauses so the previous output can be read, then
+# clears the screen, so each section of a step is its own frame.
+say() {
+  if [[ -z "$*" && -n "${DEMO_CLEAR_SECTIONS-}" ]]; then
+    sleep "${DEMO_PACE:-0}"; sleep "${DEMO_PACE:-0}"; clear; return 0
+  fi
+  printf '%s\n' "$*" | fold -s -w "$(_width)"
+}
 note() { printf '%s%s  %s%s\n' "$DIM" "$CYAN" "$*" "$RESET"; }
 warn() { printf '%s%s!! %s%s\n' "$BOLD" "$YELLOW" "$*" "$RESET"; }
 ok()   { printf '%s%s✓ %s%s\n' "$BOLD" "$GREEN" "$*" "$RESET"; }
@@ -122,7 +134,7 @@ pause() {
 run() {
   local cmd="$*"
   printf '\n%s%s$ %s%s' "$BOLD" "$GREEN" "$cmd" "$RESET"
-  if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then read -r _ < /dev/tty || true; else printf '\n'; fi
+  if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then read -r _ < /dev/tty || true; else sleep "${DEMO_PACE:-0}"; printf '\n'; fi
   printf '\n'
   local rc=0
   eval "$cmd" || rc=$?
@@ -137,7 +149,7 @@ run() {
 run_quiet() {
   local cmd="$*"
   printf '\n%s%s$ %s%s' "$BOLD" "$GREEN" "$cmd" "$RESET"
-  if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then read -r _ < /dev/tty || true; else printf '\n'; fi
+  if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then read -r _ < /dev/tty || true; else sleep "${DEMO_PACE:-0}"; printf '\n'; fi
   local out rc=0
   out="$(eval "$cmd" 2>&1)" || rc=$?
   if (( rc != 0 )); then printf '\n%s\n' "$out"; fail "command exited $rc"; exit $rc; fi

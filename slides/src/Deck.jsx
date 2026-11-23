@@ -122,6 +122,8 @@ export default function Deck() {
   }, [index, go])
 
   const Current = slides[index]
+  // Terminal recordings take the whole stage: nothing drawn over them.
+  const chrome = !Current.fullscreen
   const variants = {
     enter: (d) => ({ opacity: 0, x: 80 * d, scale: 0.985 }),
     center: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.55, ease } },
@@ -145,29 +147,33 @@ export default function Deck() {
           </motion.div>
         </AnimatePresence>
 
-        {index !== 0 && (
+        {chrome && index !== 0 && (
           <div className="chrome-logo">
             <Logo height={30} />
             {event.name && <span>{event.name}</span>}
           </div>
         )}
         {/* Latecomers: the join code stays in the corner once it has been shown. */}
-        {index > JOIN_SLIDE && index < slides.length - 1 && (
+        {chrome && index > JOIN_SLIDE && index < slides.length - 1 && (
           <div className="chrome-qr" title={joinUrl}>
             <div className="chrome-qr-code" dangerouslySetInnerHTML={{ __html: joinQr }} />
             <div className="chrome-qr-label">join</div>
           </div>
         )}
-        <div className="counter">
-          {index + 1} / {slides.length}
-        </div>
-        <div className="progress-track" />
-        <motion.div
-          className="progress"
-          initial={false}
-          animate={{ width: `${((index + 1) / slides.length) * 100}%` }}
-          transition={{ duration: 0.45, ease }}
-        />
+        {chrome && (
+          <>
+            <div className="counter">
+              {index + 1} / {slides.length}
+            </div>
+            <div className="progress-track" />
+            <motion.div
+              className="progress"
+              initial={false}
+              animate={{ width: `${((index + 1) / slides.length) * 100}%` }}
+              transition={{ duration: 0.45, ease }}
+            />
+          </>
+        )}
       </div>
     </div>
   )

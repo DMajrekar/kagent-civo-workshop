@@ -14,18 +14,23 @@ Allow about fifty-five minutes end to end.
 | 00:02 | Everyone joins | `/board` (names appear as they join) | Wait until the count stops climbing. |
 | 00:05 | **Round one — Grafana** | `/board` | `/admin` → *Start round 1*. Say the logs are in UTC. |
 | 00:25 | Time. What did people find? What did nobody find? | `/board` | Look at which columns are empty. They will be the last two. |
-| 00:27 | What kagent is. An agent is a model, a prompt and some tools. | terminal | `make agent-01` — read the manifest aloud. |
-| 00:30 | Same tools, better briefing | terminal | `make agent-02`. Show the diff from agent 01: it is all prompt. |
-| 00:32 | A specialist | terminal | `make agent-03`. |
+| 00:27 | What kagent is. An agent is a model, a prompt and some tools. | deck | — |
+| 00:29 | kagent going on to the cluster | deck: recording 1, full screen | Talk over it. It holds its last frame. |
+| 00:30 | Three agents: no briefing, a good briefing, a specialist | deck: a slide then a recording for each | The diff between agent 1 and 2 is all prompt. Say so. |
 | 00:33 | **Round two — kagent** | `/board` | `/admin` → *Start round 2*. |
 | 00:53 | Time. Read the scoreboard together. | `/board` | `/admin` → *Finish*. |
 | 00:55 | Close | `/board` | — |
 
-The agents are added **before** round two starts, not during it. Each takes
-twenty to forty seconds to become ready, and that is time off the clock if the
-clock is running. If you would rather reveal them one at a time during the
-round, start the round after `agent-01` and add the others as it goes — the
-page picks them up within five seconds either way.
+**Nothing is built live.** The hub, kagent and all three agents exist before
+the room arrives. What the deck shows between the rounds are recordings of
+those same steps being run for real against this hub (`make record`), played
+full screen. Players cannot see the agents until round two starts, so the
+reveal still happens when you press the button.
+
+If you would rather do it live, you can: `make agents-clear` beforehand, then
+`make agent-01` and so on in a terminal instead of playing the recordings.
+Each takes twenty to forty seconds to become ready, so do it before you start
+the clock.
 
 ## What to say at the scoreboard
 
@@ -57,7 +62,8 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Open Grafana from the page. Explore loads, on the Loki datasource, last 7 days.
 - [ ] Solve `volume` by hand. The card goes green; `/board` shows a blue square.
 - [ ] Try to open the kagent address directly. You are sent back to the CTF page.
-- [ ] `make agent-01`, then start round two. The agent appears on both phones.
+- [ ] `make agent-01`, `agent-02`, `agent-03`. Players see none of them yet.
+- [ ] Start round two. All three agents appear on both phones.
 - [ ] Ask it something. An answer streams back.
 - [ ] **On the second phone, open kagent. The first phone's chat is not there.**
 - [ ] In kagent's own UI, try to edit or delete the agent. It is refused.
@@ -65,6 +71,8 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Restart the CTF pod (`kubectl -n observability rollout restart deploy/ctf`).
       Scores and the clock survive.
 - [ ] Ask the relax.ai team for the rate limit on your key (docs/CAPACITY.md).
+- [ ] `make record`, rebuild the deck, and watch all four recordings on their
+      slides. Do this last: it deletes and recreates each agent.
 
 The two in bold are the ones the automated checks cannot fully make for you.
 `make hub-08` proves chat privacy against kagent's API; only a browser proves
@@ -81,7 +89,7 @@ days" ends today. Do it at least ten minutes before the session.
 | Someone joins late | Nothing to do. Late joiners see the current round immediately. |
 | A player loses their page | Same email gets the same player back, score and all. |
 | Grafana is slow when round one starts | Expected for the first half minute: it is the whole room running a 7-day query at once. `/admin` → *+1 minute* if it costs real time. |
-| An agent will not become ready | `kubectl -n kagent describe agent <name>`. Carry on with the ones that are; the page only offers agents that are ready. |
+| An agent is not ready on the day | `kubectl -n kagent describe agent <name>`. Carry on with the ones that are; the page only offers agents that are ready. |
 | Agents answer with rate-limit errors | The room has hit the relax.ai limit on the shared key. Tell people to take turns; there is no faster fix in the room. |
 | The CTF page is down | `kubectl -n observability rollout restart deploy/ctf`. State is on a volume. |
 | You need to rerun a round | `/admin` → *Start round N* again restarts its clock. Solves are kept. |

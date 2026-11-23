@@ -18,8 +18,8 @@ wifi — everything runs on one Civo cluster and is reached over mobile data.
 1. **Join.** Scan the QR code, enter an email, get a flag sheet and a handle.
 2. **Round one — Grafana.** Twelve questions about a fictional platform that
    has been misbehaving all week. The page links straight into Grafana Explore.
-3. **The swap.** The instructor adds agents to kagent, live, and starts round
-   two. The agents appear on every player's page as they come up.
+3. **The swap.** The deck shows kagent and three agents being built, then the
+   instructor starts round two and the agents appear on every player's page.
 4. **Round two — kagent.** Same flags, carrying on from wherever Grafana left
    each player, now with the real kagent dashboard.
 5. **The scoreboard** is on the projector throughout. Every solved flag is
@@ -43,7 +43,9 @@ You need a Civo API key and a relax.ai key.
 ```bash
 cp .env.example .env      # add both keys
 make hub-all              # builds everything
+make agent-01             # and agent-02, agent-03
 make status               # the addresses, and your admin key
+make record               # terminal recordings for the slides
 ```
 
 Then, in the room:
@@ -53,7 +55,7 @@ Then, in the room:
 | Players | the CTF address, as a QR code on a slide |
 | Projector | `/board` |
 | You | `/admin` — start round one, start round two, finish |
-| Between the rounds | `make agent-01`, `make agent-02`, `make agent-03` |
+| Between the rounds | the deck: recordings of kagent and the agents being built |
 
 [`docs/RUNSHEET.md`](docs/RUNSHEET.md) is the minute-by-minute plan, the
 rehearsal checklist and what to do when something breaks.

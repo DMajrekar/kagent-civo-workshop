@@ -4,12 +4,21 @@ import PlatformSlide from './PlatformSlide.jsx'
 import JoinSlide from './JoinSlide.jsx'
 import HowItPlaysSlide from './HowItPlaysSlide.jsx'
 import { RoundOneSlide, InterludeSlide, RoundTwoSlide } from './RoundSlides.jsx'
-import { AgentIsResourceSlide, McpSlide, Agent1Slide, Agent2Slide, Agent3Slide } from './AgentSlides.jsx'
+import { AgentIsResourceSlide, McpSlide, InstallSlide, Agent1Slide, Agent2Slide, Agent3Slide } from './AgentSlides.jsx'
 import ScoreboardSlide from './ScoreboardSlide.jsx'
 import { QuestionSlide, CheckWorkSlide } from './LearningSlides.jsx'
 import SharingSlide from './SharingSlide.jsx'
 import RecapSlide from './RecapSlide.jsx'
 import ThanksSlide from './ThanksSlide.jsx'
+import { demo } from './DemoSlide.jsx'
+
+// Full-screen terminal recordings of the kagent build, made by `make record`.
+// The hub is already built when the room arrives; these are how the deck shows
+// it being built anyway.
+const DemoInstall = demo(1, 'Install kagent')
+const DemoAgent1 = demo(2, 'log-reader')
+const DemoAgent2 = demo(3, 'log-detective')
+const DemoAgent3 = demo(4, 'early-warning')
 
 // The order of play is docs/RUNSHEET.md. The projector is on /board, not on
 // this deck, while a round is running: RoundOneSlide and RoundTwoSlide are the
@@ -26,9 +35,14 @@ export const slides = [
   InterludeSlide, //       back from round one
   AgentIsResourceSlide,
   McpSlide,
-  Agent1Slide, //          -> make agent-01
-  Agent2Slide, //          -> make agent-02
-  Agent3Slide, //          -> make agent-03
+  InstallSlide,
+  DemoInstall, //          recording: hub-08
+  Agent1Slide,
+  DemoAgent1, //           recording: agent-01
+  Agent2Slide,
+  DemoAgent2, //           recording: agent-02
+  Agent3Slide,
+  DemoAgent3, //           recording: agent-03
   RoundTwoSlide, //        -> /admin: start round 2, projector to /board
   ScoreboardSlide, //      back from round two; then show the real /board
   QuestionSlide,

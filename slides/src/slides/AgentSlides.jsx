@@ -67,7 +67,32 @@ export function McpSlide() {
   )
 }
 
-// One slide per agent, shown just before its `make` target is run. The left
+// Sets up the first recording: what is about to be installed, and the two
+// things that are different because a whole room will share it.
+export function InstallSlide() {
+  return (
+    <Slide>
+      <Eyebrow>Building it</Eyebrow>
+      <Title small>kagent, on the cluster you are about to use</Title>
+      <div style={{ marginTop: 60, maxWidth: 1500 }}>
+        <Bullets
+          size={42}
+          gap={0.3}
+          style={{ gap: 40 }}
+          items={[
+            { text: 'Two Helm charts', sub: 'The CRDs, then kagent itself, pointed at relax.ai.' },
+            { text: 'No built-in agents, no Kubernetes tools', sub: 'They can read Secrets. This cluster has a model key in one.' },
+            { text: 'A guard in front of the controller', sub: 'You can chat. You cannot edit, add or delete.' },
+            { text: 'One tool server: the logs, read-only', sub: 'The same Grafana and Loki you have just been using.' },
+          ]}
+        />
+      </div>
+      <Chip delay={2.0} style={{ marginTop: 50, alignSelf: 'flex-start' }}>make hub-08</Chip>
+    </Slide>
+  )
+}
+
+// One slide per agent, shown just before its recording. The left
 // column is the argument; the right is the part of the manifest that makes it.
 function AgentSlide({ n, name, title, points, code, codeSize = 24 }) {
   return (

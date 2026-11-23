@@ -34,9 +34,10 @@ help:
 	@printf '    \033[32mmake agents-clear\033[0m  take every agent away again\n'
 	@printf '\n  \033[1mOther\033[0m\n'
 	@printf '    \033[32mmake hub-all\033[0m       every hub step in order\n'
-	@printf '    \033[32mmake status\033[0m        addresses, admin key, what is running\n\n'
+	@printf '    \033[32mmake status\033[0m        addresses, admin key, what is running\n'
+	@printf '    \033[32mmake record\033[0m        record the kagent build as GIFs for the slides\n\n'
 
-.PHONY: help hub-all status agents-clear
+.PHONY: help hub-all status agents-clear record
 
 hub-%:
 	@d=$$(echo hub/step-$**/); \
@@ -56,6 +57,13 @@ agent-%:
 
 agents-clear:
 	@scripts/add-agent.sh --clear
+
+# Terminal recordings of the kagent build, for the slide deck. See the header
+# of scripts/record.sh before running it against a hub people are using.
+#   make record          all four
+#   make record N="2 3"  just those
+record:
+	@scripts/record.sh $(N)
 
 status:
 	@for f in ctf-endpoint kagent-endpoint grafana-endpoint ctf-admin-key; do \

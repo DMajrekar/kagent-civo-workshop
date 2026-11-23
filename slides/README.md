@@ -27,6 +27,29 @@ that slide. Swipe or tap on a phone.
 CTF_URL=https://ctf.example.org npm run build
 ```
 
+## The recordings
+
+Four slides are full-screen terminal recordings of the kagent side of the hub
+being built: the install, then each of the three agents. The room plays on a
+hub that already exists; the recordings are how the deck shows it being built
+anyway.
+
+```bash
+make record          # from the repo root; needs asciinema and agg
+make record N=1      # just the install
+```
+
+They are written to `src/assets/demo-kagent-1.gif` to `-4.gif` and picked up by
+name, so there is nothing to edit — rebuild the deck. A recording that does
+not exist yet shows a note on its slide rather than breaking the build.
+
+Recording an agent deletes it and creates it again, so that the terminal shows
+it being created. Do it before the event.
+
+The GIFs are sized for the 1920×1080 stage and have a black background, so they
+fill the slide with no visible edge. The logo, slide counter, join code and
+progress bar are hidden while one is up.
+
 ## Where the deck sits in the session
 
 The projector is on the scoreboard (`/board`), not this deck, while a round is
