@@ -1,103 +1,96 @@
-# Run sheet — 60 minutes
+# Run sheet
 
-Event: **Tuesday 22 September 2026**. Format: live screenshare, attendees follow along on their
-own laptops against their own Civo clusters.
+Format: a capture-the-flag in two twenty-minute rounds. Players are on their
+own phones over mobile data; there is no venue wifi and nothing to install.
+You are on a laptop with a connection of your own (a tethered phone is fine).
 
-Sixty minutes is tight for eight things going wrong at once. The plan below
-assumes **pre-work is genuinely done**. If it isn't, you lose the first twenty
-minutes to installing `kubectl` and the workshop does not finish.
-
-## Pre-work (email Friday 18 Sep, ~10 min for the attendee)
-
-Sending on the Friday gives people the weekend, which is worth more than a
-longer lead time midweek. Repo link plus exactly three instructions:
-
-1. `git clone … && cd kagent-workshop`
-2. `cp .env.example .env` and paste in the Civo key from their own account
-3. `make doctor` — must print all green
-
-`make doctor` deliberately does **not** fail on the missing model key, MCP
-endpoint or MCP token. Those are handed out in the room, and failing on them
-in advance would generate exactly the support email you are trying to avoid.
-
-Add one line: *"If `make doctor` does not pass, reply to this email — we will
-not have time to debug laptops on the day."* That sentence is worth ten minutes
-of session time.
+Allow about fifty-five minutes end to end.
 
 ## In the room
 
-| Time | Step | What is on screen | Notes |
-|------|------|-------------------|-------|
-| 00:00 | — | Welcome, what we're building | Diagram: their cluster → MCP → your hub |
-| 00:02 | **credentials slide** | `…/join` + the passphrase | Everyone claims a slot and downloads their `.env`. Same name always returns the same credentials, so reloading is safe. |
-| 00:05 | `make step-01` | Cluster creating | **Everyone fires this now.** Async — returns immediately. |
-| 00:07 | — | Talk: what kagent is, why agents in-cluster | ~4 min of air cover while Civo provisions |
-| 00:11 | `make step-02` | kagent install + relax.ai ModelConfig | Blocks on cluster ready; stragglers catch up here |
-| 00:18 | `make step-03` | First agent + dashboard port-forward | First visual payoff. They ask it a question about their own cluster. |
-| 00:27 | `make step-04` | Connect the MCP hub, query 7 days of logs | **The wow.** Use docs/DEMO-PROMPTS.md verbatim — do not improvise. Budget 30-80s per answer. |
-| 00:38 | — | Open Grafana yourself and fail to find it | The strongest argument in the session. See docs/DEMO-PROMPTS.md. |
-| 00:40 | `make step-05` | Run the report, read it together | Runs once and stops for you to talk. The CronJob is shown, not applied. |
-| 00:50 | — | Closing learnings, what next | Slides 11-15. Unhurried — this is where it lands. |
-| 00:56 | — | Q&A + what it costs | Point at docs/AFTER.md. Be explicit about billing. |
+| Time | What | On the projector | You do |
+|------|------|------------------|--------|
+| 00:00 | Welcome. A platform has been misbehaving for a week and nobody has looked. | QR code slide | — |
+| 00:02 | Everyone joins | `/board` (names appear as they join) | Wait until the count stops climbing. |
+| 00:05 | **Round one — Grafana** | `/board` | `/admin` → *Start round 1*. Say the logs are in UTC. |
+| 00:25 | Time. What did people find? What did nobody find? | `/board` | Look at which columns are empty. They will be the last two. |
+| 00:27 | What kagent is. An agent is a model, a prompt and some tools. | terminal | `make agent-01` — read the manifest aloud. |
+| 00:30 | Same tools, better briefing | terminal | `make agent-02`. Show the diff from agent 01: it is all prompt. |
+| 00:32 | A specialist | terminal | `make agent-03`. |
+| 00:33 | **Round two — kagent** | `/board` | `/admin` → *Start round 2*. |
+| 00:53 | Time. Read the scoreboard together. | `/board` | `/admin` → *Finish*. |
+| 00:55 | Close | `/board` | — |
 
-## Measured timings
+The agents are added **before** round two starts, not during it. Each takes
+twenty to forty seconds to become ready, and that is time off the clock if the
+clock is running. If you would rather reveal them one at a time during the
+round, start the round after `agent-01` and add the others as it goes — the
+page picks them up within five seconds either way.
 
-A full rehearsal from a deleted cluster (`make rehearse`, 11 Sep):
+## What to say at the scoreboard
 
-| step | machine time | slot |
-|------|--------------|------|
-| step-01 | 0m20s | 2m |
-| step-02 | 5m18s | 7m |
-| step-03 | 0m34s | 9m |
-| step-04 | 0m10s | 13m |
-| step-05 | 1m18s | 10m |
-| **total** | **8m05s** | 47m |
+The two big numbers at the top are flags found per round. They are the
+headline, but the grid underneath is the argument:
 
-The useful finding: **the machine needs about fourteen minutes of the hour.**
-Everything else is you talking, people typing, and questions. The slots are not
-tight — the room's pace is the constraint, not the tooling.
+- **The left-hand columns are mostly blue.** Grafana is perfectly good at
+  "which service is loudest". Say so. The agent did not make that easier.
+- **The right-hand columns are mostly orange, or empty.** A service that is
+  slowing down with no errors, and a certificate that has not expired yet.
+  Nothing was hidden — every one of those lines was in Grafana for twenty
+  minutes. The difference was knowing what to ask.
+- **Some people did better with `log-reader` than others did with
+  `log-detective`.** The quality of the answer is mostly the quality of the
+  question. That is the most transferable thing in the session.
 
-Two caveats. Back-to-back timings run hot for step-02: in the session it starts
-~8 minutes after step-01, so the cluster is already up and step-02 does not pay
-for the wait. And step-04's ten seconds is the *setup* only — the guided
-questions afterwards are 30–80s each and are where its thirteen minutes
-actually go.
+Be straight about the comparison: round two has a head start, because people
+have had twenty minutes with the data already. It is a demonstration, not an
+experiment, and someone in the room will say so if you do not.
 
-Run `make rehearse` again after any change. It stops at the first failure,
-because a later step that quietly does a failed step's work reads as a pass.
+## Before the day
 
-## Buffer and cut-lines
+Build the hub at least a day ahead and leave it running. Then play it
+yourself, **on a phone, on mobile data, with wifi turned off**:
 
-There is no slack in this. Decide **in advance** what you drop:
+- [ ] Join with an email. You get a handle and an empty flag sheet.
+- [ ] Join again in a private window with a second email. Two rows on `/board`.
+- [ ] `/admin` → start round one. Both phones show the flags within five seconds.
+- [ ] Open Grafana from the page. Explore loads, on the Loki datasource, last 7 days.
+- [ ] Solve `volume` by hand. The card goes green; `/board` shows a blue square.
+- [ ] Try to open the kagent address directly. You are sent back to the CTF page.
+- [ ] `make agent-01`, then start round two. The agent appears on both phones.
+- [ ] Ask it something. An answer streams back.
+- [ ] **On the second phone, open kagent. The first phone's chat is not there.**
+- [ ] In kagent's own UI, try to edit or delete the agent. It is refused.
+- [ ] Solve a flag. `/board` shows an orange square.
+- [ ] Restart the CTF pod (`kubectl -n observability rollout restart deploy/ctf`).
+      Scores and the clock survive.
+- [ ] Ask the relax.ai team for the rate limit on your key (docs/CAPACITY.md).
 
-- **First cut:** the Grafana contrast (slide 9). It is the best argument in
-  the session, so cut it last of the optional things — but it is optional.
-- **Real buffer:** step-04. There is no fixed end to the exploration; let it
-  run long if the room is engaged and short if it is not.
-- **Second cut:** step-05 already stops after the one-off run; if you are
-  short, skip reading the CronJob YAML and just say it is in the repo.
-- **Never cut:** step-04. It is the entire point of the workshop.
+The two in bold are the ones the automated checks cannot fully make for you.
+`make hub-08` proves chat privacy against kagent's API; only a browser proves
+the dashboard passes the player's identity along on every call it makes.
 
-## The takeaway is a running cluster
+On the morning: `make hub-05` re-seeds the dataset so that "the last seven
+days" ends today. Do it at least ten minutes before the session.
 
-Attendees keep their clusters, their own relax.ai key, and hub access until
-**2026-10-22**. So the takeaway genuinely works — but two things still need
-saying out loud, not left in a README:
-
-1. **It bills to their account.** Say the number. Someone finding an unexpected
-   Civo charge next month is the one outcome that turns a good workshop into a
-   complaint.
-2. **The hub goes away on 2026-10-22.** Put the date on the slide and in
-   docs/AFTER.md. A month is long enough that they will have forgotten, so the
-   date needs to be somewhere they'll find it later, so put it in the
-   follow-up email as well as on the slide.
-
-## Failure drills
+## When something breaks
 
 | If… | Do this |
 |-----|---------|
-| Someone's cluster fails to create | Spare kubeconfigs — pre-create 3 clusters as hot spares |
-| Venue WiFi dies | Nothing saves you. Have the recorded 3-min step-04 walkthrough. |
-| The hub MCP endpoint is down | `make step-04 FALLBACK=local` deploys a mini-Loki with the same seeded data into their cluster |
-| An attendee's relax.ai key doesn't work | Keys are per-attendee, so this is one person, not the room. Keep 3 spare keys on a card; swapping is one `kubectl create secret --dry-run \| kubectl apply -f -` and a rollout restart. |
-| An attendee is 2 steps behind | Steps are idempotent and independent — tell them to run the *current* step, not catch up |
+| A player has no signal | Pair them with a neighbour. There is no offline mode. |
+| Someone joins late | Nothing to do. Late joiners see the current round immediately. |
+| A player loses their page | Same email gets the same player back, score and all. |
+| Grafana is slow when round one starts | Expected for the first half minute: it is the whole room running a 7-day query at once. `/admin` → *+1 minute* if it costs real time. |
+| An agent will not become ready | `kubectl -n kagent describe agent <name>`. Carry on with the ones that are; the page only offers agents that are ready. |
+| Agents answer with rate-limit errors | The room has hit the relax.ai limit on the shared key. Tell people to take turns; there is no faster fix in the room. |
+| The CTF page is down | `kubectl -n observability rollout restart deploy/ctf`. State is on a volume. |
+| You need to rerun a round | `/admin` → *Start round N* again restarts its clock. Solves are kept. |
+| You want a clean slate | `/admin` → *Reset* → *Wipe scores*. Players stay joined. |
+| Your own connection dies | The game carries on without you; players do not go through your laptop. You only need it to change rounds and add agents — do both from a phone browser and a second terminal if you must. |
+
+## Afterwards
+
+- `/admin` → *Download emails* gives a CSV of email, handle and score.
+- `make hub-99` deletes the cluster and everything on it, including that list.
+- The hub costs money for every hour it is up. It is not designed to be left
+  running: the kagent dashboard is only as private as the CTF app's sessions.

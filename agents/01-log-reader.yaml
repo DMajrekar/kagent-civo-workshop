@@ -1,0 +1,34 @@
+# Agent 1 of 3: the one you would write in five minutes.
+#
+# It has the tools and almost no guidance. It will answer a direct question
+# ("which service logs the most?") and flounder on an open one ("is anything
+# wrong?"). Add it first: it makes the point that tools alone are not enough,
+# and it makes the next agent look as good as it is.
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: log-reader
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Reads the platform's logs. Ask it direct questions.
+  declarative:
+    modelConfig: default-model-config
+    systemMessage: |
+      You answer questions about application logs stored in Loki.
+      The Loki datasource UID is "workshop-loki". Always pass that as
+      datasourceUid.
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: workshop-logs
+          toolNames:
+            - list_loki_label_names
+            - list_loki_label_values
+            - query_loki_logs
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 512Mi }

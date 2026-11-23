@@ -1,5 +1,10 @@
 # Verified demo prompts
 
+> Measured in the build-your-own-cluster format, against the agent that is now
+> `agents/02-log-detective.yaml`. The prompts and the dataset are unchanged, so
+> they still hold. In the CTF you are not asking these on stage — the room is —
+> but they are the best hints to give a player who is stuck in round two.
+
 Measured against the seeded dataset with `RELAX_MODEL=DeepSeek-V4-Pro`. Use
 these on stage; they are the ones that actually land.
 

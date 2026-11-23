@@ -1,98 +1,47 @@
-# kagent on Civo -- workshop driver.
+# Your cluster called -- a capture-the-flag in a week of production logs.
 #
-# Attendee path:   make doctor && make step-01 ... make step-08
-# Instructor path: make hub-01 ... make hub-06   (run before the event)
+# Players need nothing but a phone. Everything here is for the instructor:
+# it builds the one cluster ("the hub") that the whole room plays against.
+#
+#   make             list the steps
+#   make hub-all     build the hub end to end
+#   make agent-01    add an agent to kagent -- do these while you present
+#   make status      where everything is, and the admin key
 #
 # Every target is idempotent: re-running a step is always safe. If something
 # fails mid-step, fix it and run the same target again.
-#
-#   make            list the steps
-#   make all        run the whole attendee workshop, pausing at each command
-#   make rehearse   run the whole thing with no pauses (use this to test)
-#   make doctor     check prerequisites
-#   make clean      delete your cluster
 
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 
-WORKSHOP_STEPS := $(sort $(notdir $(wildcard workshop/step-*)))
-HUB_STEPS      := $(sort $(notdir $(wildcard hub/step-*)))
-
-# ---------------------------------------------------------------------- help
+HUB_STEPS := $(sort $(notdir $(wildcard hub/step-*)))
+AGENTS    := $(sort $(notdir $(wildcard agents/*.yaml)))
+HUB_KUBECONFIG := .state/hub.kubeconfig
 
 help:
-	@printf '\n\033[1;34m  kagent on Civo -- workshop\033[0m\n\n'
-	@printf '  \033[1mAttendee steps\033[0m\n'
-	@for s in $(WORKSHOP_STEPS); do \
-	  n=$${s#step-}; n=$${n%%-*}; \
-	  d=$$(sed -n 's/^# title: //p' workshop/$$s/run.sh 2>/dev/null | head -1); \
-	  printf '    \033[32mmake step-%s\033[0m %s %s\n' "$$n" \
-	    "$$(printf '%*s' $$((4 - $${#n})) '')" "$$d"; \
-	done
-	@printf '\n  \033[1mInstructor / hub steps\033[0m  (run these before the event)\n'
+	@printf '\n\033[1;34m  Your cluster called -- the CTF\033[0m\n\n'
+	@printf '  \033[1mBuild the hub\033[0m  (before the event)\n'
 	@for s in $(HUB_STEPS); do \
 	  n=$${s#step-}; n=$${n%%-*}; \
 	  d=$$(sed -n 's/^# title: //p' hub/$$s/run.sh 2>/dev/null | head -1); \
-	  printf '    \033[36mmake hub-%s\033[0m  %s %s\n' "$$n" \
-	    "$$(printf '%*s' $$((4 - $${#n})) '')" "$$d"; \
+	  printf '    \033[36mmake hub-%s\033[0m        %s\n' "$$n" "$$d"; \
 	done
+	@printf '\n  \033[1mAdd agents\033[0m  (during the session, before round two)\n'
+	@for a in $(AGENTS); do \
+	  n=$${a%%-*}; name=$${a#*-}; name=$${name%.yaml}; \
+	  printf '    \033[32mmake agent-%s\033[0m      %s\n' "$$n" "$$name"; \
+	done
+	@printf '    \033[32mmake agents-clear\033[0m  take every agent away again\n'
 	@printf '\n  \033[1mOther\033[0m\n'
-	@printf '    \033[32mmake doctor\033[0m      check your laptop has the right tools\n'
-	@printf '    \033[32mmake all\033[0m         run every attendee step in order\n'
-	@printf '    \033[32mmake rehearse\033[0m    run every step with no pauses (testing)\n'
-	@printf '    \033[32mmake clean\033[0m       delete your workshop cluster\n\n'
+	@printf '    \033[32mmake hub-all\033[0m       every hub step in order\n'
+	@printf '    \033[32mmake status\033[0m        addresses, admin key, what is running\n\n'
 
-.PHONY: help doctor all rehearse clean hub-all ui ui-stop ui-status
-
-# -------------------------------------------------------------------- checks
-
-doctor:
-	@scripts/doctor.sh
-
-# The kagent dashboard. Stays open after the command returns, so it is usable
-# for the rest of the session rather than only inside one step.
-ui:
-	@scripts/ui.sh start
-
-ui-stop:
-	@scripts/ui.sh stop
-
-ui-status:
-	@scripts/ui.sh status
-
-# --------------------------------------------------------------- dynamic steps
-#
-# `make step-03` finds workshop/step-03-*/run.sh and executes it. Adding a step
-# is just adding a directory -- no Makefile edit needed.
-
-step-%:
-	@d=$$(echo workshop/step-$**/); \
-	if [ ! -d "$$d" ]; then echo "no such step: step-$*" >&2; exit 1; fi; \
-	bash $$d/run.sh
+.PHONY: help hub-all status agents-clear
 
 hub-%:
 	@d=$$(echo hub/step-$**/); \
 	if [ ! -d "$$d" ]; then echo "no such hub step: hub-$*" >&2; exit 1; fi; \
 	bash $$d/run.sh
-
-# ------------------------------------------------------------------ sequences
-
-all:
-	@first=1; \
-	for s in $(WORKSHOP_STEPS); do \
-	  case "$$s" in *step-99-*) continue;; esac; \
-	  if [ -z "$$first" ] && [ -t 0 ] && [ -z "$$DEMO_AUTO" ]; then \
-	    printf '\n\033[2m  [enter] next step\033[0m'; read -r _ </dev/tty || true; \
-	  fi; \
-	  first=; \
-	  bash workshop/$$s/run.sh || exit $$?; \
-	done
-
-# Rehearsal: no pauses, timed per step against the run sheet. If this passes
-# end to end from a deleted cluster, the live run will not surprise you.
-# Run it at least once the day before the event.
-rehearse:
-	@scripts/rehearse.sh
 
 hub-all:
 	@for s in $(HUB_STEPS); do \
@@ -100,5 +49,18 @@ hub-all:
 	  bash hub/$$s/run.sh || exit $$?; \
 	done
 
-clean:
-	@bash workshop/step-99-cleanup/run.sh
+# `make agent-02` applies agents/02-*.yaml and waits until it can answer. The
+# file is printed first: on a projector, the manifest is the slide.
+agent-%:
+	@scripts/add-agent.sh $*
+
+agents-clear:
+	@scripts/add-agent.sh --clear
+
+status:
+	@for f in ctf-endpoint kagent-endpoint grafana-endpoint ctf-admin-key; do \
+	  printf '  %-18s %s\n' "$$f" "$$(cat .state/$$f 2>/dev/null || echo '(not set yet)')"; \
+	done; \
+	if [ -f $(HUB_KUBECONFIG) ]; then \
+	  printf '\n'; KUBECONFIG=$(HUB_KUBECONFIG) kubectl -n kagent get agents.kagent.dev 2>/dev/null || true; \
+	fi

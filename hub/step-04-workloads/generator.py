@@ -162,9 +162,14 @@ def incidents(rng, svc, ts, age_days, end_ts):
     # that are actively on fire. It needs to be frequent enough to notice.
     if svc == "auth" and age_days <= 5.0:
         days_left = int(9 + age_days)
+        # Derived from the window, not written down: a fixed date here was
+        # already in the past the second time this dataset was seeded, and
+        # "expires in 9 days (notAfter=<two months ago>)" is a plot hole an
+        # agent will find and report.
+        not_after = datetime.fromtimestamp(end_ts + 9 * 86400, timezone.utc).strftime("%Y-%m-%d")
         if rng.random() < 0.06:
             out.append(("warn", f"TLS certificate for auth.internal expires in {days_left} days "
-                                f"(notAfter=2026-09-30T00:00:00Z) -- renew before expiry", {}))
+                                f"(notAfter={not_after}T00:00:00Z) -- renew before expiry", {}))
         # An escalating note as the deadline closes, so a time-ordered read
         # shows the countdown rather than a flat repeated line.
         if days_left <= 10 and rng.random() < 0.03:

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # title: Tear down the hub
 #
-# Run this on 2026-10-22, a month after the event, once attendees have had
-# their notice. Everything in .state goes with it.
+# Run this when the event is over. The hub exists only for the session, so
+# there is nobody to give notice to -- but export the player list from /admin
+# first if you want it, because the scores and emails go with the cluster.
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 
 require_env CIVO_API_KEY
@@ -21,12 +22,10 @@ if [[ -z "$CID" ]]; then
   exit 0
 fi
 
-warn "This deletes the shared hub: Loki, seven days of logs, the MCP endpoint"
-warn "and the wall. Every attendee log-detective loses its log tools."
+warn "This deletes the hub: Loki and its logs, Grafana, kagent and the CTF app,"
+warn "including every player's email and score."
 say ""
-say "Before you do this, check you gave them notice — two days beforehand,"
-say "pointing at docs/AFTER.md, which explains how to repoint the agent at"
-say "logs of their own."
+say "If you want the player list, download it from /admin first."
 printf '\n'
 
 if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then
@@ -50,15 +49,16 @@ for v in $VOLS; do
 done
 
 say ""
-say "The LoadBalancers for the MCP endpoint and the wall are deleted with the"
-say "cluster. Confirm, because they bill separately if they are ever orphaned:"
+say "The ingress LoadBalancer is deleted with the cluster. Confirm, because one"
+say "bills separately if it is ever orphaned:"
 run "civo loadbalancer ls --region '$REGION' || true"
 say ""
 say "And any volumes left unattached:"
 ORPHANS=$(civo_orphan_volumes "$REGION")
 [[ -n "$ORPHANS" ]] && echo "$ORPHANS" || ok "none"
 
-rm -f "$STATE/hub.kubeconfig" "$STATE/mcp-endpoint" "$STATE/sink-endpoint"
+( cd "$STATE" && rm -f hub.kubeconfig mcp-endpoint sink-endpoint ctf-endpoint \
+    kagent-endpoint grafana-endpoint grafana-explore-url )
 printf '\n'
 ok "Hub torn down."
 note "the token files in $STATE are now dead; delete them when you are ready"

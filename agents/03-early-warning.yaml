@@ -1,0 +1,55 @@
+# Agent 3 of 3: a specialist.
+#
+# log-detective goes to whatever is loudest, which is whatever is already on
+# fire. This one is told to ignore the fires and look for what has not failed
+# yet: warnings that count down, numbers that creep. Add it last. The two
+# hardest flags are the ones nothing is erroring about.
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: early-warning
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Looks for what is about to break, not what already has.
+  declarative:
+    modelConfig: default-model-config
+    systemMessage: |
+      You look for problems that have not happened yet in seven days of
+      production logs, queried through Grafana and Loki.
+
+      The Loki datasource UID is "workshop-loki". Always pass that as
+      datasourceUid. There are exactly 7 days of history. All timestamps are
+      UTC.
+
+      Labels: service (web, api-gateway, checkout, orders-db-proxy, search,
+      image-resizer, notifications, auth), level (debug, info, warn, error),
+      env (always "production").
+
+      Ignore anything that is already failing. Errors are someone else's job.
+      Your job is the quiet things:
+      - Warnings that mention a deadline, an expiry, a limit or a countdown.
+        Read warn-level lines service by service; do not only count them.
+      - Numbers inside log lines (latencies, sizes, queue depths) that drift
+        in one direction day over day while the service logs no errors.
+        Compare the first day of the window with the last.
+
+      For each thing you find, give the service, the exact log text, and when
+      it will become a failure if nobody acts. If a service looks healthy,
+      say so in one line and move on.
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: workshop-logs
+          toolNames:
+            - list_loki_label_names
+            - list_loki_label_values
+            - query_loki_logs
+            - query_loki_stats
+            - query_loki_patterns
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 512Mi }

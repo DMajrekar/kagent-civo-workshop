@@ -2,7 +2,8 @@
 
 Measured, not estimated. `scripts/loadtest-mcp.py` fires N concurrent MCP
 clients that each do a full handshake and then one tool call, all released
-together — the worst case, which is everyone running `make step-04` at once.
+together — the worst case, which is the whole room asking an agent its first
+question in the same ten seconds after round two unlocks.
 
 ## Results
 
@@ -62,18 +63,29 @@ In order of effect:
    `LOKI_NODE_SIZE=g4p.kube.small` before `hub-01`.
 2. **Shorten the demo window.** A 24h aggregate costs a fraction of a 7d one.
    The seeded incidents are all visible in 48h except the search latency creep.
-3. **Stagger the room.** Half start step-04 while the other half are still on
-   step-03. Two minutes of offset removes the entire spike.
+3. **Stagger the room.** Add the agents one at a time rather than all at
+   once. People try each new one as it appears, which spreads the load.
 
-## Other limits, none of them close
+## What changed with the CTF format
+
+These numbers were measured when every attendee ran an agent on their own
+cluster. The Loki side is unchanged — it is the same queries arriving at the
+same Loki — but three things are new and **none of them has been load-tested**:
+
+| Thing | Why it matters | Check before the day |
+|---|---|---|
+| **One relax.ai key for the room** | Every agent turn from every player is billed and rate-limited against the hub's single key. Before, each attendee had their own. | Ask relax.ai for the per-key rate limit and compare it with players × about 6 model calls per question. |
+| **Agent pods are shared** | One `log-detective` pod now serves everyone. kagent agents handle concurrent sessions, but 50 at once on one pod is not something this repo has measured. | Open the dashboard in several browsers and ask at the same moment. If it queues, raise `spec.declarative.deployment.replicas` in `agents/*.yaml`. |
+| **Round one is Grafana on phones** | Fifty people running a 7-day `count_over_time` in Explore is the same heavy query as the table above, arriving in a burst when round one starts. | Covered by the 4-core numbers above, but only up to 100 concurrent. |
+
+`scripts/loadtest-mcp.py` still measures the Loki path. Point it at a
+port-forward of `svc/mcp-public`, since the endpoint is no longer public.
+
+## Other limits
 
 | Thing | Capacity | Set by |
 |---|---|---|
-| MCP tokens | 60 | `ATTENDEE_COUNT` in `hub-06`, tops up without invalidating issued ones |
-| Webhook inbox codes | unique to 99 | word-pair + index suffix in `sink.py` |
-| Credential claims | unlimited | wraps and shares if the key pool is short, never blocks |
-| Civo clusters | **your account quota** | the real ceiling — default limits bite around 10 |
-| relax.ai | unknown | ask the relax team about per-key and account rate limits |
-
-The two that will actually stop you at 50 are both other people's queues: the
-Civo cluster quota and relax.ai's rate limits.
+| Players | no fixed limit | state is one JSON file; handles are unique to 576 before the word pairs repeat (the number suffix keeps them distinct) |
+| Guesses | 12 a minute per player | `SUBMIT_PER_MIN` in `ctf.py` |
+| Joins | 120 a minute per IP address | `JOIN_PER_MIN` — loose on purpose, because a mobile carrier puts a whole room behind a few addresses |
+| relax.ai | unknown | ask the relax team — see above |

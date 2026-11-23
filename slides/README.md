@@ -22,3 +22,7 @@ come from one source, so they cannot drift.
 Four values in here are specific to the September 2026 run and need changing
 before the deck is used again: the join URL and passphrase (slides 1 and 4),
 the Grafana URL (slide 2), and the repo URL (last slide).
+
+**The deck still describes the September 2026 format** — attendees building
+their own clusters over `make step-01` to `step-05`. It has not been rewritten
+for the CTF. The talk track for the new format is `docs/RUNSHEET.md`.

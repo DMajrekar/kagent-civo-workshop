@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-# title: Expose the MCP endpoint
+# title: Run the MCP endpoint for the logs
 #
-# This is the piece every attendee cluster connects to. Three parts:
+# This is what an agent's log tools talk to. Three parts:
 #   mcp-grafana   talks MCP, reads Loki through Grafana's API, read-only
-#   auth proxy    checks a per-attendee bearer token
-#   LoadBalancer  a public address
+#   auth proxy    checks a bearer token
+#   Service       cluster-internal only
 #
-# Per-attendee tokens rather than one shared secret: it costs nothing extra on
-# the workshop card, and it is the difference between revoking one token and
-# breaking the endpoint for everyone for the three weeks the hub stays up.
+# Internal, because the agents run on this cluster (hub-08). Nothing outside
+# it needs to reach the logs except through Grafana, so there is no public
+# address here to defend. The token stays anyway: it is what stops any other
+# pod on the cluster from using the endpoint.
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 
 STATE="$REPO_ROOT/.state"
 export KUBECONFIG="$STATE/hub.kubeconfig"
 [[ -f "$KUBECONFIG" ]] || { fail "no hub kubeconfig — run 'make hub-01' first"; exit 1; }
 NS="${OBS_NAMESPACE:-observability}"
-N_TOKENS="${ATTENDEE_COUNT:-60}"   # 50 attendees plus spares
+N_TOKENS="${MCP_TOKEN_COUNT:-3}"   # one for kagent, a couple spare for your own probing
 # Digest-pinned. ":latest" moved under us would change the tool list an agent
 # sees, with no version number anywhere to explain why.
 MCP_IMAGE="${MCP_IMAGE:-mcp/grafana@sha256:9362bcf6aa0e44e61f645b905cec03fb346a946a34a4dafecd7f3e28d3724014}"
@@ -59,7 +60,7 @@ fi
 grep -q . "$SA_TOKEN_FILE" || { fail "empty Grafana service account token"; exit 1; }
 ok "Grafana service account token ready ($SA_TOKEN_FILE)"
 
-# ------------------------------------------------------- attendee tokens
+# ----------------------------------------------------------------- tokens
 # Top up rather than regenerate: existing tokens may already be in someone's
 # .env, and rewriting the file would silently lock them out.
 TOKENS_FILE="$STATE/mcp-tokens.txt"
@@ -71,7 +72,7 @@ if (( HAVE < N_TOKENS )); then
   done
   (( HAVE > 0 )) && note "topped up from $HAVE to $N_TOKENS tokens (existing ones kept)"
 fi
-ok "$(wc -l < "$TOKENS_FILE") attendee tokens ($TOKENS_FILE)"
+ok "$(wc -l < "$TOKENS_FILE") tokens ($TOKENS_FILE)"
 
 run_quiet "kubectl -n '$NS' create secret generic mcp-grafana-auth \
   --from-file=GRAFANA_SERVICE_ACCOUNT_TOKEN='$SA_TOKEN_FILE' \
@@ -129,20 +130,6 @@ run_quiet "kubectl -n '$NS' create configmap mcp-proxy-conf \
   --from-file=tokens.conf='$STATE/mcp-tokens.conf' \
   --from-file=proxy.conf='$STATE/mcp-proxy.conf' \
   --dry-run=client -o yaml | kubectl apply -f -"
-
-# If hub-08 has already fronted this with an ingress, do not hand it back a
-# LoadBalancer of its own. Re-running this step afterwards would otherwise
-# resurrect a billing Civo LB, reopen an unencrypted way in, and overwrite
-# .state/mcp-endpoint with a plain-http address that the credential handout
-# then issues to everyone.
-if MCP_ING_HOST=$(kubectl -n "$NS" get ingress mcp -o jsonpath='{.spec.rules[0].host}' 2>/dev/null) \
-   && [[ -n "$MCP_ING_HOST" ]]; then
-  MCP_SVC_TYPE=ClusterIP
-  note "ingress 'mcp' exists — keeping the Service internal and using https://$MCP_ING_HOST"
-else
-  MCP_SVC_TYPE=LoadBalancer
-  MCP_ING_HOST=""
-fi
 
 cat > "$STATE/mcp.yaml" <<YAML
 apiVersion: apps/v1
@@ -247,7 +234,7 @@ apiVersion: v1
 kind: Service
 metadata: { name: mcp-public, namespace: ${NS} }
 spec:
-  type: ${MCP_SVC_TYPE}
+  type: ClusterIP
   selector: { app: mcp-proxy }
   ports: [{ name: http, port: 80, targetPort: 8080 }]
 YAML
@@ -256,17 +243,13 @@ run "kubectl apply -f '$STATE/mcp.yaml'"
 run "kubectl -n '$NS' rollout status deploy/mcp-grafana --timeout=300s"
 run "kubectl -n '$NS' rollout status deploy/mcp-proxy   --timeout=300s"
 
-if [[ "$MCP_SVC_TYPE" == "ClusterIP" ]]; then
-  MCP_URL="https://${MCP_ING_HOST}/mcp"
-  LB_IP="$MCP_ING_HOST"
-else
-  wait_for "LoadBalancer to get an address" 600 \
-    "[[ -n \"\$(kubectl -n '$NS' get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')\" ]]"
-  LB_IP=$(kubectl -n "$NS" get svc mcp-public -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  MCP_URL="http://${LB_IP}/mcp"
-fi
-echo "$MCP_URL" > "$STATE/mcp-endpoint"
-ok "MCP endpoint: $MCP_URL"
+# An earlier version of this hub gave the endpoint a LoadBalancer. `kubectl
+# apply` has just turned that back into a ClusterIP; say so, because a Civo
+# LoadBalancer that lingers is a line on the bill.
+trap cleanup_port_forwards EXIT
+port_forward "$NS" svc/mcp-public 18000:80
+MCP_URL="http://127.0.0.1:18000/mcp"
+ok "MCP endpoint (in-cluster): http://mcp-public.${NS}.svc.cluster.local/mcp"
 
 # ------------------------------------------------------------- verification
 say ""
@@ -302,14 +285,7 @@ MCP_TOKEN="$FIRST_TOKEN" run "python3 '$REPO_ROOT/scripts/mcp-probe.py' '$MCP_UR
   --args '{\"datasourceUid\":\"workshop-loki\",\"labelName\":\"service\"}'"
 
 printf '\n'
-ok "The MCP endpoint is live and authenticated."
-if [[ "$MCP_URL" == https://* ]]; then
-  ok "served over TLS via the ingress"
-else
-warn "This is plain HTTP — bearer tokens cross the internet in clear text."
-note "hub-08 puts TLS in front of it. Run that before handing the endpoint to"
-note "anyone; do not print this URL on a workshop card."
-fi
-note "endpoint: $MCP_URL"
-note "tokens:   $TOKENS_FILE"
-note "next:  make hub-07   (the webhook wall), then hub-08 (TLS)"
+ok "The MCP endpoint is live, authenticated and internal."
+note "in-cluster: http://mcp-public.${NS}.svc.cluster.local/mcp"
+note "tokens:     $TOKENS_FILE"
+note "next:  make hub-07   (the CTF app)"
