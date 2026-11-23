@@ -134,3 +134,20 @@ jobs:
             exit 1
           fi
           echo "clean"
+
+  # The deck is React and has to compile. A typo in one slide is otherwise
+  # found at the moment the deck is opened in front of a room.
+  slides:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: slides
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: slides/package-lock.json
+      - run: npm ci
+      - run: npm run build

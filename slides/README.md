@@ -1,28 +1,39 @@
 # The slide deck
 
-`build.py` holds the deck's content — one `slide(...)` call each, with the
-speaker notes that make up the run of show. `mkpptx.py` turns that into a
-`.pptx` with no third-party libraries, because the machine this was written on
-had no way to install one.
+A React deck on a fixed 1920×1080 stage, built with Vite — the same setup as
+the KCD Indonesia 2026 deck. One component per slide in `src/slides/`; the
+order is `src/slides/index.jsx`.
 
 ```bash
-python3 slides/build.py
+cd slides
+npm ci
+npm run dev        # http://localhost:5173, live reload
+npm run build      # static site in dist/
 ```
 
-Writes both outputs next to this file:
+Keys: arrows or space to move, `f` for fullscreen, type a number to jump to
+that slide. Swipe or tap on a phone.
 
-- `Your Cluster Called - kagent workshop.pptx` — drag into Google Drive and
-  open with Slides; it converts on the way in
-- `your-cluster-called-deck.md` — the same content as markdown, for pasting
-  into a design tool
+## Before each event
 
-Editing the deck means editing `build.py` and re-running it. The two outputs
-come from one source, so they cannot drift.
+- **`src/event.js`** — the event name and place, shown on the title slide and
+  in the corner of every other one.
+- **The join QR code** is generated at build time from, in order: `CTF_URL` in
+  the environment, `.state/ctf-endpoint` (written by `make hub-09`), or a
+  placeholder. Build the deck *after* the hub has its address, and check the
+  code on slide 4 with a phone.
 
-Four values in here are specific to the September 2026 run and need changing
-before the deck is used again: the join URL and passphrase (slides 1 and 4),
-the Grafana URL (slide 2), and the repo URL (last slide).
+```bash
+CTF_URL=https://ctf.example.org npm run build
+```
 
-**The deck still describes the September 2026 format** — attendees building
-their own clusters over `make step-01` to `step-05`. It has not been rewritten
-for the CTF. The talk track for the new format is `docs/RUNSHEET.md`.
+## Where the deck sits in the session
+
+The projector is on the scoreboard (`/board`), not this deck, while a round is
+running. `index.jsx` marks the slides you leave from and come back to, and
+`docs/RUNSHEET.md` has the timings.
+
+## The old deck
+
+`archive/` is the September 2026 PowerPoint deck and its generator, for the
+build-your-own-cluster format. Nothing uses it.

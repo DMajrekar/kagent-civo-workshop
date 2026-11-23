@@ -1,0 +1,301 @@
+:root {
+  --black: #000000;
+  --aurora: #00ff6f;
+  --cloud: #d1ccbe;
+  --white: #ffffff;
+  --public: #d46ffe;
+  --private: #ff7633;
+  --ai: #33b7a3;
+  --dim: rgba(209, 204, 190, 0.55);
+  --line: rgba(209, 204, 190, 0.22);
+  --panel: rgba(255, 255, 255, 0.04);
+  --font: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A fixed 1920x1080 stage, scaled to fit whatever the projector gives us. */
+.viewport {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  overflow: hidden;
+}
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: center center;
+  overflow: hidden;
+}
+.slide-layer {
+  position: absolute;
+  inset: 0;
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: 96px 120px 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chrome: progress bar, counter, small logo */
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 6px;
+  background: var(--aurora);
+  transform-origin: left center;
+  z-index: 10;
+}
+.progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 9;
+}
+.counter {
+  position: absolute;
+  right: 48px;
+  bottom: 28px;
+  font-size: 22px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  z-index: 10;
+}
+.chrome-logo {
+  position: absolute;
+  left: 48px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--dim);
+  font-size: 22px;
+  z-index: 10;
+}
+.chrome-logo svg { height: 30px; width: auto; display: block; }
+.chrome-qr {
+  position: absolute;
+  right: 48px;
+  bottom: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+}
+.chrome-qr-code { width: 132px; height: 132px; padding: 8px; background: #fff; border-radius: 10px; }
+.chrome-qr-code svg { display: block; width: 100%; height: 100%; }
+.chrome-qr-label { font-size: 18px; color: var(--dim); }
+
+/* Type */
+h1, h2, h3, p, ul { margin: 0; }
+.eyebrow {
+  font-size: 30px;
+  color: var(--aurora);
+  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+}
+.title {
+  font-size: 92px;
+  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.title.small { font-size: 76px; }
+.subtitle {
+  font-size: 40px;
+  color: var(--cloud);
+  line-height: 1.3;
+  font-weight: 400;
+}
+.accent { color: var(--aurora); }
+.muted { color: var(--dim); }
+
+.bullets {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  font-size: 42px;
+  line-height: 1.25;
+  color: var(--white);
+}
+.bullets li {
+  display: flex;
+  gap: 26px;
+  align-items: flex-start;
+}
+.bullets .mark {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 18px;
+  background: var(--aurora);
+  border-radius: 3px;
+}
+.bullets .sub {
+  display: block;
+  font-size: 30px;
+  color: var(--dim);
+  margin-top: 6px;
+}
+
+/* Layout helpers */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  flex: 1;
+  align-items: center;
+  min-height: 0;
+}
+.two-col.wide-right { grid-template-columns: 0.9fr 1.1fr; }
+.col { min-width: 0; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 28px;
+  padding: 18px 28px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--cloud);
+  white-space: nowrap;
+}
+.chip .prompt { color: var(--aurora); }
+.chip.block { display: flex; white-space: normal; line-height: 1.45; }
+.chip.code { display: block; white-space: pre; margin: 0; line-height: 1.5; }
+.chip.code .hl { color: var(--aurora); }
+.bullets code { font-family: var(--mono); font-size: 0.85em; color: var(--aurora); }
+
+.box {
+  position: absolute;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+.box .box-title { font-size: 30px; font-weight: 600; line-height: 1.15; }
+.box .box-sub { font-size: 22px; color: var(--dim); line-height: 1.25; }
+.box.accent { border-color: var(--aurora); }
+.box.dashed { border-style: dashed; }
+.box.ghost { background: transparent; }
+
+.pod {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--aurora);
+  box-shadow: 0 0 24px rgba(0, 255, 111, 0.25);
+}
+.pod.pending {
+  background: transparent;
+  border: 3px dashed var(--private);
+  box-shadow: none;
+}
+
+.panel {
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: var(--panel);
+  padding: 40px 48px;
+}
+
+.hcl {
+  font-family: var(--mono);
+  font-size: 22px;
+  line-height: 1.3;
+  margin: 0;
+  color: rgba(209, 204, 190, 0.85);
+}
+.hcl .ln { display: block; white-space: pre; }
+.hcl .kw { color: var(--cloud); font-weight: 700; }
+.hcl .str { color: var(--white); }
+.hcl .cm { color: var(--dim); font-style: italic; }
+.hcl .hl, .hcl .hl .kw, .hcl .hl .str, .hcl .hl .cm { color: var(--aurora); font-style: normal; }
+
+.kbd-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  font-size: 20px;
+  color: var(--dim);
+  z-index: 10;
+}
+
+/* The two rounds. Same colours as the scoreboard the room is looking at. */
+:root {
+  --r1: #6ea8e0;
+  --r2: #ff7633;
+}
+.r1 { color: var(--r1); }
+.r2 { color: var(--r2); }
+
+.quote {
+  font-size: 58px;
+  line-height: 1.22;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--white);
+}
+.quote + .quote { margin-top: 44px; }
+
+.big-qr {
+  background: var(--white);
+  border-radius: 32px;
+  padding: 26px;
+}
+.big-qr svg { display: block; width: 100%; height: 100%; }
+
+.step-num {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 3px solid var(--aurora);
+  color: var(--aurora);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  font-weight: 600;
+}
+
+.dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  border: 2px solid var(--line);
+}
+.dot.d1 { background: var(--r1); border-color: var(--r1); }
+.dot.d2 { background: var(--r2); border-color: var(--r2); }

@@ -1,0 +1,12 @@
+// The only things that change from one event to the next. The join address is
+// not here: it comes from the hub at build time (see vite.config.js).
+export const event = {
+  name: '',        // e.g. 'Civo Navigate 2026' — shown bottom-left on every slide
+  where: '',       // e.g. 'London, 3 December 2026' — title slide only
+  speaker: 'Dinesh Majrekar',
+  org: 'Civo',
+}
+
+// Zero-based index of the slide with the big join QR code. The small corner
+// code appears on every slide after it.
+export const JOIN_SLIDE = 3
