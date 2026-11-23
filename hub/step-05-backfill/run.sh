@@ -5,9 +5,14 @@
 # regardless of how long the hub has actually been running. It is also how you
 # re-seed on the morning of the event so "the last 24 hours" is fresh.
 #
-#   make hub-05             backfill, then validate
-#   WIPE=1 make hub-05      wipe Loki first (clean re-seed)
+#   make hub-05                 wipe Loki, backfill, then validate
+#   KEEP_LOGS=1 make hub-05     backfill on top of what is there
 #   VALIDATE_ONLY=1 make hub-05
+#
+# The wipe is the default because it is the only thing that works once the
+# live generator has run: Loki refuses entries more than about an hour older
+# than the newest one already in a stream, and step 04 has been writing "now"
+# into every stream since it started. Only synthetic logs are lost.
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 
 STATE="$REPO_ROOT/.state"
@@ -32,8 +37,8 @@ banner "Hub — step 05: backfill and validate"
     note "no live generator deployed yet — nothing to pause"
   fi
 
-if [[ -n "${WIPE-}" ]]; then
-  warn "WIPE=1 — deleting all existing log data"
+if [[ -z "${VALIDATE_ONLY-}" && -z "${KEEP_LOGS-}" ]]; then
+  warn "deleting all existing log data, so the history can be written in order"
   run "kubectl -n '$NS' scale statefulset loki --replicas=0"
   wait_for "Loki to stop" 120 "! kubectl -n '$NS' get pod loki-0 >/dev/null 2>&1"
   run "kubectl -n '$NS' delete pvc storage-loki-0 --ignore-not-found"
@@ -58,7 +63,7 @@ metadata:
   name: backfill
   namespace: ${NS}
 spec:
-  backoffLimit: 1
+  backoffLimit: 0
   ttlSecondsAfterFinished: 3600
   template:
     spec:
@@ -132,7 +137,7 @@ set -e
 printf '\n'
 if (( VRC != 0 )); then
   fail "The dataset does not tell its story. Step-04 would fall flat."
-  note "Re-run with WIPE=1 make hub-05 for a clean seed, or check the"
+  note "Re-run make hub-05 for a clean seed, or check the"
   note "incident definitions in hub/step-04-workloads/generator.py"
   exit 1
 fi

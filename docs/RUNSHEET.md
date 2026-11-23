@@ -71,8 +71,10 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Restart the CTF pod (`kubectl -n observability rollout restart deploy/ctf`).
       Scores and the clock survive.
 - [ ] Ask the relax.ai team for the rate limit on your key (docs/CAPACITY.md).
-- [ ] `make record`, rebuild the deck, and watch all four recordings on their
-      slides. Do this last: it deletes and recreates each agent.
+- [ ] `make record`, then `make hub-10`, and watch all four recordings on their
+      slides at the deck's address. Do this last: it deletes and recreates
+      each agent.
+- [ ] Scan the QR code on the join slide with a phone. It opens this hub.
 
 The two in bold are the ones the automated checks cannot fully make for you.
 `make hub-08` proves chat privacy against kagent's API; only a browser proves

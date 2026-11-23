@@ -58,7 +58,7 @@ ORPHANS=$(civo_orphan_volumes "$REGION")
 [[ -n "$ORPHANS" ]] && echo "$ORPHANS" || ok "none"
 
 ( cd "$STATE" && rm -f hub.kubeconfig mcp-endpoint sink-endpoint ctf-endpoint \
-    kagent-endpoint grafana-endpoint grafana-explore-url )
+    kagent-endpoint grafana-endpoint grafana-explore-url slides-endpoint )
 printf '\n'
 ok "Hub torn down."
 note "the token files in $STATE are now dead; delete them when you are ready"

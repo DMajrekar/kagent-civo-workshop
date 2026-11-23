@@ -66,7 +66,7 @@ record:
 	@scripts/record.sh $(N)
 
 status:
-	@for f in ctf-endpoint kagent-endpoint grafana-endpoint ctf-admin-key; do \
+	@for f in ctf-endpoint kagent-endpoint grafana-endpoint slides-endpoint ctf-admin-key; do \
 	  printf '  %-18s %s\n' "$$f" "$$(cat .state/$$f 2>/dev/null || echo '(not set yet)')"; \
 	done; \
 	if [ -f $(HUB_KUBECONFIG) ]; then \

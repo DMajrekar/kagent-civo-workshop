@@ -369,6 +369,38 @@ def agents():
     return out
 
 
+# Starting points for round one, opened in Explore ready to run. Without them
+# a player on a phone has to already know LogQL's metric syntax to get past a
+# wall of raw lines. They show shapes of question, not answers: nothing here
+# mentions a latency, a certificate or a deploy.
+STARTERS = [
+    ("Lines per service, per hour", 'sum by (service) (count_over_time({env="production"}[1h]))'),
+    ("Errors per service, per hour", 'sum by (service) (count_over_time({level="error"}[1h]))'),
+    ("Lines per level, per hour", 'sum by (level) (count_over_time({env="production"}[1h]))'),
+    ("One service, errors only", '{service="web", level="error"}'),
+    ("Search every line for a word", '{env="production"} |= "timeout"'),
+]
+
+
+def explore_url(expr):
+    """GRAFANA_URL with its query swapped for `expr`."""
+    try:
+        u = urllib.parse.urlsplit(GRAFANA_URL)
+        q = dict(urllib.parse.parse_qsl(u.query))
+        panes = json.loads(q["panes"])
+        for pane in panes.values():
+            for query in pane["queries"]:
+                query["expr"] = expr
+        q["panes"] = json.dumps(panes)
+        return urllib.parse.urlunsplit(u._replace(query=urllib.parse.urlencode(q)))
+    except (KeyError, ValueError, TypeError):
+        return ""
+
+
+STARTER_LINKS = [{"k": k, "q": expr, "url": explore_url(expr)} for k, expr in STARTERS]
+STARTER_LINKS = [x for x in STARTER_LINKS if x["url"]]
+
+
 def me(pid):
     with LOCK:
         p = STATE["players"][pid]
@@ -382,6 +414,7 @@ def me(pid):
     return {"handle": p["handle"], "score": score(pid), "max": MAX_POINTS,
             "round": rv, "flags": flags,
             "grafana": GRAFANA_URL if rv["phase"] != "lobby" else "",
+            "starters": STARTER_LINKS if rv["phase"] != "lobby" else [],
             "agents": agents() if rv["kagent"] else []}
 
 
@@ -420,6 +453,11 @@ button:disabled{opacity:.5;cursor:default}
 .tool{display:block;text-decoration:none;color:inherit}
 .tool .k{font-weight:600;display:block} .tool .d{color:var(--dim);font-size:.88rem;display:block}
 .tool.off{opacity:.55}
+.starters{margin:-4px 0 10px;padding:0 4px}
+.starters summary{color:var(--dim);font-size:.88rem;cursor:pointer;padding:6px 0}
+.starters a{display:block;text-decoration:none;color:inherit;border-top:1px solid var(--line);padding:9px 0}
+.starters .k{display:block;font-weight:600;font-size:.92rem}
+.starters code{display:block;color:var(--dim);font-size:.74rem;overflow-wrap:anywhere}
 .flag .top{display:flex;gap:10px;align-items:baseline}
 .flag .t{font-weight:600} .flag .p{margin-left:auto;color:var(--dim);font-size:.85rem;white-space:nowrap}
 .flag .q{margin:6px 0 10px;color:var(--fg)}
@@ -502,7 +540,7 @@ Keep this page open.</p>
 
 <script>
 const $=id=>document.getElementById(id);
-let S=null, skew=0, built=false;
+let S=null, skew=0, built=false, starterOpen=true;
 const NAMES={lobby:"Waiting to start",grafana:"Round 1 · Grafana",kagent:"Round 2 · kagent",done:"Finished"};
 
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
@@ -518,6 +556,16 @@ function renderTools(){
   const ph=S.round.phase;
   if(ph==="lobby"){t.append(tool(null,"Nothing yet","Your tools unlock when the round starts.",true));return;}
   t.append(tool(S.grafana,"Grafana Explore","Seven days of logs from eight services. Query them with LogQL."));
+  if((S.starters||[]).length){
+    const d=el("details","starters"); d.open=starterOpen;
+    d.addEventListener("toggle",()=>{starterOpen=d.open;});
+    d.append(el("summary",null,"Starter queries — tap one to open it in Grafana"));
+    for(const q of S.starters){
+      const a=el("a"); a.href=q.url; a.target="_blank"; a.rel="noopener";
+      a.append(el("span","k",q.k),el("code",null,q.q)); d.append(a);
+    }
+    t.append(d);
+  }
   if(!S.round.kagent){t.append(tool(null,"kagent","Locked until round 2.",true));return;}
   if(!S.agents.length){t.append(tool(null,"kagent","Unlocked — the first agent is on its way.",true));return;}
   for(const a of S.agents){

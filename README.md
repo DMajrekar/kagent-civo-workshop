@@ -46,6 +46,7 @@ make hub-all              # builds everything
 make agent-01             # and agent-02, agent-03
 make status               # the addresses, and your admin key
 make record               # terminal recordings for the slides
+make hub-10               # again, to put the recordings in the hosted deck
 ```
 
 Then, in the room:
@@ -55,6 +56,7 @@ Then, in the room:
 | Players | the CTF address, as a QR code on a slide |
 | Projector | `/board` |
 | You | `/admin` — start round one, start round two, finish |
+| The deck | hosted on the hub; `make status` prints its address |
 | Between the rounds | the deck: recordings of kagent and the agents being built |
 
 [`docs/RUNSHEET.md`](docs/RUNSHEET.md) is the minute-by-minute plan, the
@@ -85,6 +87,8 @@ agent. Three things stop that here:
 | `hub/step-*/` | Builds the hub. One `run.sh` each, idempotent. |
 | `hub/step-07-ctf/ctf.py` | The whole CTF app: join, flags, scoreboard, round control. |
 | `hub/step-08-kagent/` | kagent's values and the guard. |
+| `hub/step-10-slides/` | Builds the deck on the hub and serves it. |
+| `slides/` | The deck's source. |
 | `agents/` | The agents you add during the session. Edit, add or remove freely. |
 | `docs/RUNSHEET.md` | The plan for the session. |
 | `docs/INCIDENTS.md` | The seeded dataset, its six incidents and the twelve flags. |

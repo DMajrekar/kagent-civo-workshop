@@ -65,7 +65,7 @@ ok "Grafana service account token ready ($SA_TOKEN_FILE)"
 # .env, and rewriting the file would silently lock them out.
 TOKENS_FILE="$STATE/mcp-tokens.txt"
 touch "$TOKENS_FILE"; chmod 600 "$TOKENS_FILE"
-HAVE=$(grep -c . "$TOKENS_FILE" 2>/dev/null || echo 0)
+HAVE=$(grep -c . "$TOKENS_FILE" 2>/dev/null || true); HAVE=${HAVE:-0}
 if (( HAVE < N_TOKENS )); then
   for (( i = HAVE + 1; i <= N_TOKENS; i++ )); do
     printf 'attendee-%02d %s\n' "$i" "$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 28)" >> "$TOKENS_FILE"

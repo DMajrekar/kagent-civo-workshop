@@ -11,6 +11,18 @@ npm run dev        # http://localhost:5173, live reload
 npm run build      # static site in dist/
 ```
 
+## Hosted on the hub
+
+```bash
+make hub-10        # from the repo root
+```
+
+builds the deck on the hub and serves it over HTTPS; `make status` prints the
+address. It needs no Node or Docker on your machine: the build runs in a
+container on the cluster. Run it again after any change to `slides/`,
+including after `make record`. The join QR code always points at the hub the
+deck was built on.
+
 Keys: arrows or space to move, `f` for fullscreen, type a number to jump to
 that slide. Swipe or tap on a phone.
 
@@ -40,7 +52,7 @@ make record N=1      # just the install
 ```
 
 They are written to `src/assets/demo-kagent-1.gif` to `-4.gif` and picked up by
-name, so there is nothing to edit — rebuild the deck. A recording that does
+name, so there is nothing to edit — rebuild the deck (`make hub-10`). A recording that does
 not exist yet shows a note on its slide rather than breaking the build.
 
 Recording an agent deletes it and creates it again, so that the terminal shows
