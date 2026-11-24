@@ -10,12 +10,12 @@ Allow about fifty-five minutes end to end.
 
 | Time | What | On the projector | You do |
 |------|------|------------------|--------|
-| 00:00 | Welcome. A platform has been misbehaving for a week and nobody has looked. | QR code slide | — |
-| 00:02 | Everyone joins | `/board` (names appear as they join) | Wait until the count stops climbing. |
+| 00:00 | Welcome. How an alert gets handled, and what the logs already knew. Then what Grafana looks like. | deck | — |
+| 00:02 | Everyone joins | QR code slide, then `/board` (names appear as they join) | Wait until the count stops climbing. |
 | 00:05 | **Round one — Grafana** | `/board` | `/admin` → *Start round 1*. Say the logs are in UTC. |
 | 00:25 | Time. What did people find? What did nobody find? | `/board` | Look at which columns are empty. They will be the last two. |
 | 00:27 | What kagent is. An agent is a model, a prompt and some tools. | deck | — |
-| 00:29 | kagent going on to the cluster | deck: recording 1, full screen | Talk over it. It holds its last frame. |
+| 00:29 | A cluster, then kagent going on to it | deck: six recordings, full screen | Two for the cluster, four for the install. Each holds its last frame until you move on. |
 | 00:30 | Three agents: no briefing, a good briefing, a specialist | deck: a slide then a recording for each | The diff between agent 1 and 2 is all prompt. Say so. |
 | 00:33 | **Round two — kagent** | `/board` | `/admin` → *Start round 2*. |
 | 00:53 | Time. Read the scoreboard together. | `/board` | `/admin` → *Finish*. |
@@ -62,6 +62,8 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Open Grafana from the page. Explore loads, on the Loki datasource, last 7 days.
 - [ ] Solve `volume` by hand. The card goes green; `/board` shows a blue square.
 - [ ] Try to open the kagent address directly. You are sent back to the CTF page.
+- [ ] In round two, open an agent, then change the address to `/agents` or
+      `/models`. You are sent back to the CTF page: only the chat is reachable.
 - [ ] `make agent-01`, `agent-02`, `agent-03`. Players see none of them yet.
 - [ ] Start round two. All three agents appear on both phones.
 - [ ] Ask it something. An answer streams back.
@@ -71,9 +73,10 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Restart the CTF pod (`kubectl -n observability rollout restart deploy/ctf`).
       Scores and the clock survive.
 - [ ] Ask the relax.ai team for the rate limit on your key (docs/CAPACITY.md).
-- [ ] `make record`, then `make hub-10`, and watch all four recordings on their
+- [ ] `make record`, then `make hub-10`, and watch all nine recordings on their
       slides at the deck's address. Do this last: it deletes and recreates
-      each agent.
+      each agent, and creates and destroys a second cluster for the Terraform
+      recording.
 - [ ] Scan the QR code on the join slide with a phone. It opens this hub.
 
 The two in bold are the ones the automated checks cannot fully make for you.

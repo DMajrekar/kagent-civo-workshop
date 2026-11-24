@@ -33,7 +33,7 @@ that slide. Swipe or tap on a phone.
 - **The join QR code** is generated at build time from, in order: `CTF_URL` in
   the environment, `.state/ctf-endpoint` (written by `make hub-09`), or a
   placeholder. Build the deck *after* the hub has its address, and check the
-  code on slide 4 with a phone.
+  code on the join slide with a phone.
 
 ```bash
 CTF_URL=https://ctf.example.org npm run build
@@ -41,26 +41,52 @@ CTF_URL=https://ctf.example.org npm run build
 
 ## The recordings
 
-Four slides are full-screen terminal recordings of the kagent side of the hub
-being built: the install, then each of the three agents. The room plays on a
-hub that already exists; the recordings are how the deck shows it being built
-anyway.
+Nine slides are full-screen terminal recordings of the build: a cluster being
+created with Terraform, the kagent install, one slide per section of each,
+then each of the three agents. The room plays on a hub that already exists;
+the recordings are how the deck shows it being built anyway.
 
 ```bash
 make record          # from the repo root; needs asciinema and agg
+make record N=0      # just the cluster; needs terraform
 make record N=1      # just the install
+make hub-10          # rebuild the hosted deck with them
 ```
 
-They are written to `src/assets/demo-kagent-1.gif` to `-4.gif` and picked up by
-name, so there is nothing to edit — rebuild the deck (`make hub-10`). A recording that does
-not exist yet shows a note on its slide rather than breaking the build.
+They are written to `src/assets/` and picked up by name: `demo-kagent-0-1.gif`
+onwards for the cluster, `-1-1.gif` onwards for the install, `demo-kagent-2.gif`
+to `-4.gif` for the agents. A recording that does not exist yet shows a note
+on its slide rather than breaking the build. The cluster and the install are
+cut wherever their step clears the screen; if `make record` reports a
+different number of parts, change the `DemoCluster` or `DemoInstall` list in
+`src/slides/index.jsx` to match.
 
-Recording an agent deletes it and creates it again, so that the terminal shows
-it being created. Do it before the event.
+The cluster recording is a real `terraform apply` of `terraform/main.tf`. It
+creates a second three-node cluster next to the hub for a few minutes and
+destroys it when the recording ends.
+
+The step banners and the guard in front of kagent are left out of the
+recordings. The guard is still installed and tested while recording.
+
+Recording deletes the agents and creates them again, so that the terminal
+shows a build from nothing. Do it before the event.
 
 The GIFs are sized for the 1920×1080 stage and have a black background, so they
 fill the slide with no visible edge. The logo, slide counter, join code and
 progress bar are hidden while one is up.
+
+## The Grafana screenshots
+
+Three slides before the join code show what Grafana Explore looks like, where
+the query goes and how to set the time range. The screenshots are of this hub:
+
+```bash
+scripts/grafana-shots.sh     # from the repo root; then make hub-10
+```
+
+It runs a headless browser in a pod on the hub, so needs nothing installed. It
+prints where the query box and the time picker are; if a Grafana upgrade moves
+them, copy the numbers into `src/slides/GrafanaSlides.jsx`.
 
 ## Where the deck sits in the session
 

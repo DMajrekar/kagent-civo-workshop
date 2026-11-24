@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Slide, Eyebrow, Title, Bullets, Chip, Code, Box, Arrow, ArrowDefs, fadeUp } from '../ui.jsx'
+import { Slide, Eyebrow, Title, Bullets, Code, Box, Arrow, ArrowDefs, fadeUp } from '../ui.jsx'
 
 export function AgentIsResourceSlide() {
   const rows = [
@@ -27,9 +27,6 @@ export function AgentIsResourceSlide() {
           </motion.div>
         ))}
       </div>
-      <motion.p className="subtitle" style={{ marginTop: 56 }} variants={fadeUp} initial="hidden" animate="show" custom={1.9}>
-        A manifest. Review it, diff it, roll it back.
-      </motion.p>
     </Slide>
   )
 }
@@ -67,8 +64,7 @@ export function McpSlide() {
   )
 }
 
-// Sets up the first recording: what is about to be installed, and the two
-// things that are different because a whole room will share it.
+// Sets up the recordings that follow: the cluster, then what goes on to it.
 export function InstallSlide() {
   return (
     <Slide>
@@ -80,14 +76,13 @@ export function InstallSlide() {
           gap={0.3}
           style={{ gap: 40 }}
           items={[
+            { text: 'A new cluster, from Terraform', sub: 'Three nodes on Civo.' },
             { text: 'Two Helm charts', sub: 'The CRDs, then kagent itself, pointed at relax.ai.' },
             { text: 'No built-in agents, no Kubernetes tools', sub: 'They can read Secrets. This cluster has a model key in one.' },
-            { text: 'A guard in front of the controller', sub: 'You can chat. You cannot edit, add or delete.' },
             { text: 'One tool server: the logs, read-only', sub: 'The same Grafana and Loki you have just been using.' },
           ]}
         />
       </div>
-      <Chip delay={2.0} style={{ marginTop: 50, alignSelf: 'flex-start' }}>make hub-08</Chip>
     </Slide>
   )
 }
@@ -104,7 +99,6 @@ function AgentSlide({ n, name, title, points, code, codeSize = 24 }) {
       <div className="two-col wide-right" style={{ marginTop: 20, gap: 60, alignItems: 'start', paddingTop: 30 }}>
         <div className="col">
           <Bullets items={points} size={38} />
-          <Chip delay={1.6} style={{ marginTop: 50 }}>make agent-0{n}</Chip>
         </div>
         <div className="col">
           <Code delay={0.7} style={{ fontSize: codeSize }}>{code}</Code>
@@ -177,3 +171,37 @@ export const Agent3Slide = () => (
     }
   />
 )
+
+// What the install recordings just created, as the two manifests behind them.
+// Shown before the agents, which refer to both by name.
+export function SetupSlide() {
+  const Col = ({ label, what, delay, children }) => (
+    <div className="col">
+      <motion.div variants={fadeUp} initial="hidden" animate="show" custom={delay} style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 40, fontWeight: 600 }}>{label}</div>
+        <div className="muted" style={{ fontSize: 28 }}>{what}</div>
+      </motion.div>
+      <Code delay={delay + 0.2} style={{ fontSize: 24 }}>{children}</Code>
+    </div>
+  )
+  return (
+    <Slide>
+      <Eyebrow>What we just installed</Eyebrow>
+      <Title small>A model provider, and a tool server</Title>
+      <div className="two-col" style={{ marginTop: 20, gap: 56, alignItems: 'start', paddingTop: 30, gridTemplateColumns: '0.8fr 1.2fr' }}>
+        <Col label="Model provider" what="What every agent thinks with." delay={0.5}>
+          {'kind: ModelConfig\nmetadata:\n  name: default-model-config\nspec:\n'}
+          {hl('  provider: OpenAI\n  model: DeepSeek-V4-Pro\n')}
+          {'  openAI:\n'}
+          {hl('    baseUrl: https://api.relax.ai/v1\n')}
+          {'  apiKeySecret: kagent-relax\n  apiKeySecretKey: RELAX_API_KEY'}
+        </Col>
+        <Col label="MCP" what="Where an agent gets its tools." delay={1.1}>
+          {'kind: RemoteMCPServer\nmetadata:\n  name: workshop-logs\nspec:\n  protocol: STREAMABLE_HTTP\n'}
+          {hl('  url: http://mcp-public.observability.svc.cluster.local/mcp\n')}
+          {'  headersFrom:\n    - name: Authorization\n      valueFrom:\n        type: Secret\n        name: workshop-logs-auth\n        key: token'}
+        </Col>
+      </div>
+    </Slide>
+  )
+}

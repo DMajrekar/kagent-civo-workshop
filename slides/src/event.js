@@ -6,7 +6,3 @@ export const event = {
   speaker: 'Dinesh Majrekar',
   org: 'Civo',
 }
-
-// Zero-based index of the slide with the big join QR code. The small corner
-// code appears on every slide after it.
-export const JOIN_SLIDE = 3

@@ -57,6 +57,10 @@ ok "secrets created"
 # ----------------------------------------------------------------- the guard
 # Before kagent, because the dashboard is configured to call it from its
 # first request.
+#
+# The guard is hidden from the slide recordings (hide_begin .. hide_end): it
+# is still installed and still tested, it is just not part of that story.
+hide_begin
 say ""
 say "The guard first. It is thirty lines of nginx, and it is the reason a room"
 say "full of people can share one kagent: reads pass, conversations pass,"
@@ -105,14 +109,18 @@ spec:
   ports: [{ name: http, port: 8080, targetPort: 8080 }]
 YAML
 run "kubectl apply -f '$STATE/kagent-guard.yaml'"
+hide_end
 
 # ------------------------------------------------------------------- kagent
 OVERRIDE=""
-[[ "$MODEL"    != "DeepSeek-V4-Pro" ]]            && OVERRIDE+=" --set providers.openAI.model=$MODEL"
-[[ "$BASE_URL" != "https://api.relax.ai/v1" ]]    && OVERRIDE+=" --set providers.openAI.config.baseUrl=$BASE_URL"
+[[ "$MODEL"    != "DeepSeek-V4-Pro" ]]            && OVERRIDE+="   --set providers.openAI.model=$MODEL"
+[[ "$BASE_URL" != "https://api.relax.ai/v1" ]]    && OVERRIDE+="   --set providers.openAI.config.baseUrl=$BASE_URL"
 KAGENT_URL="$(cat "$STATE/kagent-endpoint" 2>/dev/null || true)"
-[[ -n "$KAGENT_URL" ]] && OVERRIDE+=" --set ui.externalUrl=$KAGENT_URL"
+[[ -n "$KAGENT_URL" ]] && OVERRIDE+="   --set ui.externalUrl=$KAGENT_URL"
 
+say ""
+say "kagent itself. No built-in agents and no Kubernetes tools: the values"
+say "file turns them all off, and points the model at relax.ai."
 run "helm upgrade --install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
   --namespace kagent --wait --timeout 10m \
   --values '$HERE/values.yaml'$OVERRIDE \
@@ -122,8 +130,13 @@ wait_for "the kagent controller to be ready" 600 \
   "kubectl -n kagent get deploy kagent-controller -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -q '^[1-9]'"
 # The guard resolves the controller's name when nginx starts, so it can only
 # become ready once the controller Service exists.
+hide_begin
 run "kubectl -n kagent rollout restart deploy/kagent-guard"
 run "kubectl -n kagent rollout status deploy/kagent-guard --timeout=300s"
+hide_end
+say ""
+say "What that started: the controller, the dashboard, and a database for"
+say "the conversations. No agents yet."
 run "kubectl -n kagent get pods"
 
 ACTUAL=$(kubectl -n kagent get modelconfig default-model-config -o jsonpath='{.spec.openAI.baseUrl}' 2>/dev/null || true)
@@ -133,7 +146,7 @@ if [[ "$ACTUAL" != "$BASE_URL" ]]; then
 fi
 
 LEFT=$(kubectl -n kagent get agents.kagent.dev --no-headers 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$LEFT" != "0" ]]; then
+if [[ "$LEFT" != "0" && -z "${DEMO_RECORD-}" ]]; then
   note "$LEFT agent(s) already exist in the kagent namespace:"
   kubectl -n kagent get agents.kagent.dev --no-headers | awk '{print "    " $1}'
   note "players will see every one of them in round two"
@@ -165,9 +178,11 @@ YAML
 run "kubectl apply -f '$STATE/hub-remote-mcp.yaml'"
 wait_for "kagent to connect and discover the log tools" 300 \
   "[[ \"\$(kubectl -n kagent get remotemcpserver workshop-logs -o jsonpath='{.status.conditions[?(@.type==\"Accepted\")].status}' 2>/dev/null)\" == 'True' ]]"
-run "kubectl -n kagent get remotemcpserver workshop-logs -o jsonpath='{.status.discoveredTools[*].name}' | tr ' ' '\n'"
+run "kubectl -n kagent get remotemcpserver workshop-logs \
+  -o jsonpath='{.status.discoveredTools[*].name}' | tr ' ' '\n'"
 
 # ------------------------------------------------------------- verification
+hide_begin
 say ""
 say "Now prove the guard does what it says, from the dashboard's side of it."
 trap cleanup_port_forwards EXIT
@@ -208,6 +223,7 @@ else
   note "and confirm neither can see the other's chat"
 fi
 
+hide_end
 if (( BAD )); then
   fail "the guard is not enforcing what it should — do not open this to a room"
   note "kubectl -n kagent logs deploy/kagent-guard --tail=40"
@@ -215,6 +231,7 @@ if (( BAD )); then
 fi
 
 printf '\n'
+if [[ -n "${DEMO_RECORD-}" ]]; then ok "kagent is installed, and it can read the logs."; exit 0; fi
 ok "kagent is installed, and players can do nothing to it but talk."
 note "agents:  make agent-01 …   (see agents/ — add them while you present)"
 note "next:    make hub-09   (public HTTPS addresses for all of it)"

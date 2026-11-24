@@ -12,7 +12,8 @@ export default function PlatformSlide() {
       <div style={{ position: 'absolute', inset: 0 }}>
         <svg width={1920} height={1080} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           <ArrowDefs />
-          <Arrow from={[1010, 590]} to={[1150, 590]} label="logs" delay={1.6} labelOffset={[0, -18]} labelSize={22} />
+          <Arrow from={[1010, 480]} to={[1150, 480]} label="logs" delay={1.6} labelOffset={[0, -18]} labelSize={22} />
+          <Arrow from={[1410, 668]} to={[1410, 594]} delay={2.1} />
         </svg>
 
         {services.map((s, i) => (
@@ -28,7 +29,8 @@ export default function PlatformSlide() {
           />
         ))}
 
-        <Box x={1150} y={470} w={520} h={240} accent delay={1.4} title="Loki" sub="Every line, for a week. Labelled by service and level." titleStyle={{ fontSize: 44 }} subStyle={{ fontSize: 26 }} />
+        <Box x={1150} y={370} w={520} h={220} delay={1.4} title="Loki" sub="Every line, for a week. Labelled by service and level." titleStyle={{ fontSize: 44 }} subStyle={{ fontSize: 26 }} />
+        <Box x={1150} y={670} w={520} h={150} accent delay={2.0} title="Grafana" sub="Where we go to read them." titleStyle={{ fontSize: 44 }} subStyle={{ fontSize: 26 }} />
       </div>
 
       <motion.p
@@ -37,7 +39,7 @@ export default function PlatformSlide() {
         variants={fadeUp}
         initial="hidden"
         animate="show"
-        custom={2.2}
+        custom={2.7}
       >
         A small online shop. <span className="accent">Six things are wrong with it.</span> Nobody has looked.
       </motion.p>

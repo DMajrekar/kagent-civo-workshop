@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Slide, Eyebrow, Title, fadeUp, stagger, item, ease } from '../ui.jsx'
+import { Slide, Title, fadeUp, stagger, item, ease } from '../ui.jsx'
 import { joinQr, joinUrl } from 'virtual:qr'
 
 const steps = [
@@ -11,9 +11,8 @@ const steps = [
 export default function JoinSlide() {
   return (
     <Slide>
-      <Eyebrow>Join in</Eyebrow>
-      <Title small>All you need is a phone</Title>
-      <div className="two-col" style={{ marginTop: 20 }}>
+      <Title small>Join in</Title>
+      <div className="two-col" style={{ marginTop: 60 }}>
         <motion.div className="col" variants={stagger(0.3, 0.5)} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: 44 }}>
           {steps.map((s, i) => (
             <motion.div key={i} variants={item} style={{ display: 'flex', gap: 30, alignItems: 'flex-start' }}>

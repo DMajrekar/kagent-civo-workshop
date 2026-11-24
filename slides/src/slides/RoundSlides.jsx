@@ -42,9 +42,6 @@ export function InterludeSlide() {
       <motion.h1 className="title" style={{ fontSize: 124, maxWidth: 1500 }} variants={fadeUp} initial="hidden" animate="show" custom={0.2}>
         What did <span className="accent">nobody</span> find?
       </motion.h1>
-      <motion.p className="subtitle" style={{ marginTop: 50, maxWidth: 1300 }} variants={fadeUp} initial="hidden" animate="show" custom={0.9}>
-        Every line was there for twenty minutes. Nothing was hidden.
-      </motion.p>
     </Slide>
   )
 }

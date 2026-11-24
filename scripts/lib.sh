@@ -10,6 +10,9 @@
 #   DEMO_NARROW=1 wrap narration at 72 cols instead of terminal width
 #   DEMO_PACE=2   with DEMO_AUTO, hold each command on screen for this many
 #                 seconds before running it (scripts/record.sh sets this)
+#   DEMO_RECORD=1 set by scripts/record.sh: no step banner or narration, long commands
+#                 shown one flag per line, and `hide_begin`/`hide_end` blocks
+#                 run without being shown
 #   DEMO_CLEAR_SECTIONS=1  clear the screen at each `say ""`, so a recording
 #                 shows one section of a step at a time
 
@@ -82,6 +85,7 @@ _width() {
 }
 
 banner() {
+  [[ -n "${DEMO_RECORD-}" ]] && return 0
   local w; w=$(_width)
   # Start each step on a clean screen. `make all` otherwise scrolls one wall of
   # text past the room and the step you are on is lost in the middle of it.
@@ -106,6 +110,9 @@ say() {
   if [[ -z "$*" && -n "${DEMO_CLEAR_SECTIONS-}" ]]; then
     sleep "${DEMO_PACE:-0}"; sleep "${DEMO_PACE:-0}"; clear; return 0
   fi
+  # Narration is for a presenter at a terminal. In a recording the presenter
+  # is in the room, talking over it.
+  [[ -n "${DEMO_RECORD-}" ]] && return 0
   printf '%s\n' "$*" | fold -s -w "$(_width)"
 }
 note() { printf '%s%s  %s%s\n' "$DIM" "$CYAN" "$*" "$RESET"; }
@@ -131,13 +138,32 @@ pause() {
 # to confirm something done outside the script.
 # The command is displayed exactly as the attendee would type it, which is the
 # whole point: they are reading along and copying from their own repo.
+# How a command is shown. A recording is 112 columns wide, and a long helm
+# command wraps mid-word at that width, so there it gets one flag per line.
+# The steps mark those breaks with runs of spaces where a `\` continuation was.
+_show() {
+  if [[ -n "${DEMO_RECORD-}" ]]; then sed -E 's/ {2,}/ \\\n    /g' <<<"${1//$REPO_ROOT\//}"
+  else printf '%s\n' "$1"; fi
+}
+
+# Parts of a step that still have to happen while recording but are not part
+# of the story the slides tell. Everything between the two runs silently.
+hide_begin() { [[ -z "${DEMO_RECORD-}" ]] || exec 8>&1 9>&2 >/dev/null 2>&1; }
+hide_end()   { [[ -z "${DEMO_RECORD-}" ]] || exec 1>&8 2>&9 8>&- 9>&-; }
+
 run() {
   local cmd="$*"
-  printf '\n%s%s$ %s%s' "$BOLD" "$GREEN" "$cmd" "$RESET"
+  printf '\n%s%s$ %s%s' "$BOLD" "$GREEN" "$(_show "$cmd")" "$RESET"
   if [[ -z "${DEMO_AUTO-}" && -t 0 ]]; then read -r _ < /dev/tty || true; else sleep "${DEMO_PACE:-0}"; printf '\n'; fi
   printf '\n'
   local rc=0
-  eval "$cmd" || rc=$?
+  if [[ -n "${DEMO_RECORD-}" && "$cmd" == helm\ * ]]; then
+    # A chart's NOTES are a screenful of their own and push the command that
+    # produced them off the top of a recording.
+    eval "$cmd" | sed '/^NOTES:/,$d' || rc=$?
+  else
+    eval "$cmd" || rc=$?
+  fi
   if (( rc != 0 )); then
     printf '\n'; fail "command exited $rc"
     [[ -n "${DEMO_CONTINUE_ON_ERROR-}" ]] || exit $rc

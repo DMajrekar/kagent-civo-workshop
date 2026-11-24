@@ -46,6 +46,12 @@ SUBMIT_PER_MIN = 12            # per player; the hour flag has only 24 answers
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s.]{2,24}$")
 COOKIE = "ctf"                 # on the CTF host
 GW_COOKIE = "ctfk"             # on the kagent host
+# What a player may load from the kagent host: a chat with an agent in our
+# namespace, and what that page fetches. Checked in _gw_auth.
+GW_ALLOWED = re.compile(
+    r"^/(?:(?:api|a2a|_next)/.*"
+    r"|agents/" + re.escape(KAGENT_NS) + r"/[^/]+/chat(?:/[^/]+)?/?"
+    r"|icon|favicon\.ico)$")
 
 ADJECTIVES = ["amber","brisk","calm","coral","dusky","eager","fleet","golden",
               "hazel","ivory","jade","keen","lunar","misty","noble","olive",
@@ -869,6 +875,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(401, "join first\n", "text/plain")
         if not round_view()["kagent"]:
             return self._send(401, "kagent unlocks in round 2\n", "text/plain")
+        # The dashboard is far more than a chat window: it has pages for
+        # creating agents, models and tool servers. The guard refuses to save
+        # any of them, but a player should not be looking at the forms at all.
+        # Only the chat with an agent, and what that page loads, is let in;
+        # anything else answers 401, which the ingress turns into a redirect
+        # back to the CTF page.
+        original = self.headers.get("X-Original-URL", "")
+        if original and not GW_ALLOWED.match(urllib.parse.urlsplit(original).path):
+            return self._send(401, "chat only\n", "text/plain")
         with LOCK:
             handle = STATE["players"][pid]["handle"]
         return self._send(200, "ok\n", "text/plain", (("X-User-Id", handle + "@ctf"),))
@@ -880,7 +895,15 @@ class Handler(BaseHTTPRequestHandler):
             to = "/"
         if not pid:
             return self._redirect(PUBLIC_URL or "/")
-        return self._redirect(to, (self._set_cookie(GW_COOKIE, session_token(pid)),))
+        # A page rather than a redirect, because it runs on the kagent host
+        # and so can tell the dashboard its first-run wizard has been seen.
+        # The wizard walks through creating a model and an agent, none of
+        # which a player can do.
+        dest = json.dumps(to).replace("<", "\\u003c")
+        body = ("<!doctype html><meta charset=utf-8><title>kagent</title>"
+                "<script>try{localStorage.setItem('kagent-onboarding','true')}catch(e){}"
+                f"location.replace({dest})</script>")
+        return self._send(200, body, headers=(self._set_cookie(GW_COOKIE, session_token(pid)),))
 
     # ---- routes -------------------------------------------------------------
 

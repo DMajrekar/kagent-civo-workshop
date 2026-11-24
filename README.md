@@ -66,11 +66,14 @@ rehearsal checklist and what to do when something breaks.
 
 kagent's dashboard has no login. Put it on the internet as it comes and every
 visitor is the same user, reads every chat, and has a Delete button on the
-agent. Three things stop that here:
+agent. Four things stop that here:
 
 - **Identity.** The ingress asks the CTF app about every request to kagent.
   The answer names the player, and kagent files their chats under that name —
   so nobody sees anyone else's, including the answers.
+- **Chat only.** The same check lets a player load an agent's chat page and
+  nothing else. The dashboard's pages for creating agents, models and tool
+  servers send them back to the CTF page.
 - **A guard.** The dashboard's API calls go through a small nginx
   (`hub/step-08-kagent/guard.conf`) that passes reads and conversations and
   refuses everything else. Agents can only be changed with `kubectl`.
@@ -89,6 +92,7 @@ agent. Three things stop that here:
 | `hub/step-08-kagent/` | kagent's values and the guard. |
 | `hub/step-10-slides/` | Builds the deck on the hub and serves it. |
 | `slides/` | The deck's source. |
+| `terraform/` | A cluster like the hub's, created and destroyed for one slide recording. |
 | `agents/` | The agents you add during the session. Edit, add or remove freely. |
 | `docs/RUNSHEET.md` | The plan for the session. |
 | `docs/INCIDENTS.md` | The seeded dataset, its six incidents and the twelve flags. |

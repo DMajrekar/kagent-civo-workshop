@@ -30,7 +30,7 @@ export default function TitleSlide() {
       <div style={{ maxWidth: 1500 }}>
         <motion.h1
           className="title"
-          style={{ fontSize: 132, marginBottom: 40 }}
+          style={{ fontSize: 132 }}
           variants={fadeUp}
           initial="hidden"
           animate="show"
@@ -40,9 +40,6 @@ export default function TitleSlide() {
           <br />
           <span className="accent">It has found a problem.</span>
         </motion.h1>
-        <motion.p className="subtitle" variants={fadeUp} initial="hidden" animate="show" custom={0.5}>
-          A capture-the-flag in a week of production logs. Bring a phone.
-        </motion.p>
       </div>
 
       <motion.div

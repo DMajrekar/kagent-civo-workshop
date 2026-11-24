@@ -34,12 +34,10 @@ NAME="$(sed -n 's/^  name: //p' "$F" | head -1)"
 # room should be reading the spec.
 # Not when recording: the manifest is longer than the recorded screen, and the
 # slide before the recording already shows the part of it that matters.
-if [[ -z "${DEMO_CLEAR_SECTIONS-}" ]]; then
+if [[ -z "${DEMO_RECORD-}" ]]; then
   printf '\n%s# agents/%s%s\n' "$DIM" "$(basename "$F")" "$RESET"
   grep -v '^\s*#' "$F"
   printf '\n'
-else
-  banner "kagent — agent $N: $NAME"
 fi
 
 [[ -n "${DEMO_AUTO-}" ]] && sleep "${DEMO_PACE:-0}"
@@ -50,4 +48,6 @@ wait_for "$NAME to be ready" 240 \
          -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.message}{"\n"}{end}'; exit 1; }
 
 run "kubectl -n kagent get agent $NAME"
-ok "$NAME is live — it is on every player's page now"
+# An agent is not only a row in a table: kagent starts a pod for each one.
+run "kubectl -n kagent get pods -l kagent=$NAME"
+ok "$NAME is live"

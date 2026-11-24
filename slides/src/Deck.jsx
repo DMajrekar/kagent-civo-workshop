@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { slides } from './slides/index.jsx'
+import { slides, JOIN_SLIDE } from './slides/index.jsx'
 import { Logo, ease } from './ui.jsx'
 import { joinQr, joinUrl } from 'virtual:qr'
-import { event, JOIN_SLIDE } from './event.js'
+import { event } from './event.js'
 
 const W = 1920
 const H = 1080
@@ -28,6 +28,7 @@ function useScale() {
 export default function Deck() {
   const [index, setIndex] = useState(readHash)
   const [dir, setDir] = useState(1)
+  const [from, setFrom] = useState(null)
   const scale = useScale()
   const typed = useRef('')
   const typedTimer = useRef(null)
@@ -38,6 +39,7 @@ export default function Deck() {
       setIndex((cur) => {
         if (clamped === cur) return cur
         setDir(clamped > cur ? 1 : -1)
+        setFrom(cur)
         return clamped
       })
     },
@@ -124,20 +126,27 @@ export default function Deck() {
   const Current = slides[index]
   // Terminal recordings take the whole stage: nothing drawn over them.
   const chrome = !Current.fullscreen
+  // One recording straight after another is a hard cut: it should read as the
+  // same terminal carrying on, not as a new slide arriving.
+  const cut = Boolean(Current.fullscreen && from !== null && slides[from]?.fullscreen)
+  const motionArgs = { d: dir, cut }
   const variants = {
-    enter: (d) => ({ opacity: 0, x: 80 * d, scale: 0.985 }),
-    center: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.55, ease } },
-    exit: (d) => ({ opacity: 0, x: -80 * d, scale: 0.985, transition: { duration: 0.35, ease } }),
+    enter: ({ d, cut: c }) => (c ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: 80 * d, scale: 0.985 }),
+    center: ({ cut: c }) => ({ opacity: 1, x: 0, scale: 1, transition: { duration: c ? 0 : 0.55, ease } }),
+    exit: ({ d, cut: c }) =>
+      c
+        ? { opacity: 1, transition: { duration: 0 } }
+        : { opacity: 0, x: -80 * d, scale: 0.985, transition: { duration: 0.35, ease } },
   }
 
   return (
     <div className="viewport">
       <div className="stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
-        <AnimatePresence mode="wait" custom={dir} initial={false}>
+        <AnimatePresence mode="wait" custom={motionArgs} initial={false}>
           <motion.div
             key={index}
             className="slide-layer"
-            custom={dir}
+            custom={motionArgs}
             variants={variants}
             initial="enter"
             animate="center"

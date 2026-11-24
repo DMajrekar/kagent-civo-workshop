@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Slide, ease } from '../ui.jsx'
+import { Slide } from '../ui.jsx'
 
 // Recorded terminal sessions, made by scripts/record.sh and found by name.
 // A glob rather than an import per file, so the deck still builds before the
@@ -33,13 +32,11 @@ function Recording({ n, title }) {
     <Slide style={{ padding: 0, background: 'var(--black)' }}>
       {gif ? (
         src && (
-          <motion.img
+          // No fade of its own: between two recordings the change is a cut.
+          <img
             src={src}
             alt={`Terminal recording: ${title}`}
             style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease }}
           />
         )
       ) : (

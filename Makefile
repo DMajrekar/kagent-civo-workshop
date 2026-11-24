@@ -35,7 +35,7 @@ help:
 	@printf '\n  \033[1mOther\033[0m\n'
 	@printf '    \033[32mmake hub-all\033[0m       every hub step in order\n'
 	@printf '    \033[32mmake status\033[0m        addresses, admin key, what is running\n'
-	@printf '    \033[32mmake record\033[0m        record the kagent build as GIFs for the slides\n\n'
+	@printf '    \033[32mmake record\033[0m        record the build as GIFs for the slides\n\n'
 
 .PHONY: help hub-all status agents-clear record
 
@@ -60,8 +60,9 @@ agents-clear:
 
 # Terminal recordings of the kagent build, for the slide deck. See the header
 # of scripts/record.sh before running it against a hub people are using.
-#   make record          all four
+#   make record          all five
 #   make record N="2 3"  just those
+#   make record N=0      just the cluster being created (needs terraform)
 record:
 	@scripts/record.sh $(N)
 
