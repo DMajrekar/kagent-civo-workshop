@@ -58,9 +58,10 @@ ok "secrets created"
 # Before kagent, because the dashboard is configured to call it from its
 # first request.
 #
-# The guard is hidden from the slide recordings (hide_begin .. hide_end): it
-# is still installed and still tested, it is just not part of that story.
-hide_begin
+# The guard is left out of the slide recordings: it is still installed and
+# still tested, it is just not part of that story. When recording it goes in
+# off screen, after the list of pods has been shown, so that it is not in it.
+guard_install() {
 say ""
 say "The guard first. It is thirty lines of nginx, and it is the reason a room"
 say "full of people can share one kagent: reads pass, conversations pass,"
@@ -109,7 +110,8 @@ spec:
   ports: [{ name: http, port: 8080, targetPort: 8080 }]
 YAML
 run "kubectl apply -f '$STATE/kagent-guard.yaml'"
-hide_end
+}
+[[ -n "${DEMO_RECORD-}" ]] || guard_install
 
 # ------------------------------------------------------------------- kagent
 OVERRIDE=""
@@ -130,14 +132,18 @@ wait_for "the kagent controller to be ready" 600 \
   "kubectl -n kagent get deploy kagent-controller -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -q '^[1-9]'"
 # The guard resolves the controller's name when nginx starts, so it can only
 # become ready once the controller Service exists.
-hide_begin
+guard_restart() {
 run "kubectl -n kagent rollout restart deploy/kagent-guard"
 run "kubectl -n kagent rollout status deploy/kagent-guard --timeout=300s"
-hide_end
+}
+[[ -n "${DEMO_RECORD-}" ]] || guard_restart
 say ""
 say "What that started: the controller, the dashboard, and a database for"
 say "the conversations. No agents yet."
 run "kubectl -n kagent get pods"
+if [[ -n "${DEMO_RECORD-}" ]]; then
+  hide_begin; guard_install; guard_restart; hide_end
+fi
 
 ACTUAL=$(kubectl -n kagent get modelconfig default-model-config -o jsonpath='{.spec.openAI.baseUrl}' 2>/dev/null || true)
 if [[ "$ACTUAL" != "$BASE_URL" ]]; then

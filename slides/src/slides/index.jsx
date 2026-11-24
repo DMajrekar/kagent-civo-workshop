@@ -4,14 +4,14 @@ import PlatformSlide from './PlatformSlide.jsx'
 import JoinSlide from './JoinSlide.jsx'
 import HowItPlaysSlide from './HowItPlaysSlide.jsx'
 import { GrafanaExploreSlide, GrafanaQuerySlide, GrafanaTimeSlide } from './GrafanaSlides.jsx'
-import { RoundOneSlide, InterludeSlide, RoundTwoSlide } from './RoundSlides.jsx'
+import { InterludeSlide, RoundTwoSlide } from './RoundSlides.jsx'
 import { AgentIsResourceSlide, McpSlide, InstallSlide, SetupSlide, Agent1Slide, Agent2Slide, Agent3Slide } from './AgentSlides.jsx'
-import ScoreboardSlide from './ScoreboardSlide.jsx'
-import { IdeasSlide, CheckWorkSlide } from './LearningSlides.jsx'
+import { IdeasSlide } from './LearningSlides.jsx'
 import SharingSlide from './SharingSlide.jsx'
 import RecapSlide from './RecapSlide.jsx'
 import ThanksSlide from './ThanksSlide.jsx'
 import { demo } from './DemoSlide.jsx'
+import { board } from './BoardSlide.jsx'
 
 // Full-screen terminal recordings of the build, made by `make record`.
 // The hub is already built when the room arrives; these are how the deck shows
@@ -29,13 +29,16 @@ const DemoInstall = [
   demo('1-3', 'What is running'),
   demo('1-4', 'Connecting the logs'),
 ]
+// The live scoreboard, framed in the deck. Start and stop the rounds from
+// /admin on your own device; the board follows within a few seconds.
+const BoardLobby = board()
+const BoardRoundTwo = board()
+
 const DemoAgent1 = demo(2, 'log-reader')
 const DemoAgent2 = demo(3, 'log-detective')
 const DemoAgent3 = demo(4, 'early-warning')
 
-// The order of play is docs/RUNSHEET.md. The projector is on /board, not on
-// this deck, while a round is running: RoundOneSlide and RoundTwoSlide are the
-// last thing shown before each clock starts.
+// The order of play is docs/RUNSHEET.md.
 //
 // The small join code in the corner appears on every slide after JoinSlide.
 export const slides = [
@@ -47,7 +50,7 @@ export const slides = [
   GrafanaQuerySlide,
   GrafanaTimeSlide,
   JoinSlide,
-  RoundOneSlide, //        -> /admin: start round 1, projector to /board
+  BoardLobby, //           live: names appear; -> /admin: start round 1; stay for the round
   InterludeSlide, //       back from round one
   AgentIsResourceSlide,
   McpSlide,
@@ -61,10 +64,9 @@ export const slides = [
   DemoAgent2, //           recording: agent-02
   Agent3Slide,
   DemoAgent3, //           recording: agent-03
-  RoundTwoSlide, //        -> /admin: start round 2, projector to /board
-  ScoreboardSlide, //      back from round two; then show the real /board
+  RoundTwoSlide,
+  BoardRoundTwo, //        live: -> /admin: start round 2; stay for the round, then finish
   IdeasSlide,
-  CheckWorkSlide,
   SharingSlide,
   RecapSlide,
   ThanksSlide,

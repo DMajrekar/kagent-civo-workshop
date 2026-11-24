@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Slide, Eyebrow, Title, Bullets, fadeUp } from '../ui.jsx'
+import { Slide, Eyebrow, Title, fadeUp } from '../ui.jsx'
 
 // Where to take kagent after today. Four ways the same agent could be put to
 // work without anyone opening a chat window.
@@ -23,27 +23,6 @@ export function IdeasSlide() {
             <div style={{ fontSize: 32, color: 'var(--cloud)', lineHeight: 1.3 }}>{it.sub}</div>
           </motion.div>
         ))}
-      </div>
-    </Slide>
-  )
-}
-
-export function CheckWorkSlide() {
-  return (
-    <Slide>
-      <Eyebrow>What we learned</Eyebrow>
-      <Title small>Check its work</Title>
-      <div style={{ marginTop: 70, maxWidth: 1500 }}>
-        <Bullets
-          size={44}
-          gap={0.3}
-          style={{ gap: 44 }}
-          items={[
-            { text: 'Right finding, wrong service', sub: 'In testing it once pinned the checkout deploy on image-resizer.' },
-            { text: 'A fast colleague who has read everything', sub: 'And is sometimes confidently wrong.' },
-            { text: 'Make it show you the log line', sub: 'The flag only accepted the answer that was really in the logs.' },
-          ]}
-        />
       </div>
     </Slide>
   )

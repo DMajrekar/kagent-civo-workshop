@@ -68,8 +68,9 @@ destroys it when the recording ends.
 The step banners and the guard in front of kagent are left out of the
 recordings. The guard is still installed and tested while recording.
 
-Recording deletes the agents and creates them again, so that the terminal
-shows a build from nothing. Do it before the event.
+Recording uninstalls kagent and deletes the agents, then installs and creates
+them again, so that the terminal shows a build from nothing. That wipes
+kagent's chat history. Do it before the event.
 
 The GIFs are sized for the 1920×1080 stage and have a black background, so they
 fill the slide with no visible edge. The logo, slide counter, join code and
@@ -90,9 +91,9 @@ them, copy the numbers into `src/slides/GrafanaSlides.jsx`.
 
 ## Where the deck sits in the session
 
-The projector is on the scoreboard (`/board`), not this deck, while a round is
-running. `index.jsx` marks the slides you leave from and come back to, and
-`docs/RUNSHEET.md` has the timings.
+The deck stays on the projector throughout. Two of its slides are the live
+scoreboard (the CTF app's `/board`, framed): one after the join code, which
+stays up through round one, and one for round two. `docs/RUNSHEET.md` has the timings.
 
 ## The old deck
 

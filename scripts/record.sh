@@ -27,8 +27,8 @@
 # minutes of three nodes, and needs terraform installed. Without terraform a
 # plain `make record` skips it and says so.
 #
-# The recordings show a build from nothing, so the hub is put back to "kagent
-# with no agents" first: every agent is deleted before recording 1, and each
+# The recordings show a build from nothing, so kagent is uninstalled from the
+# hub before recording 1 (taking every agent and all chat history with it), and each
 # agent is deleted immediately before its own recording and created again by
 # it. Any agent that was not re-recorded is put back at the end. Do this before
 # the event, not during it -- anyone mid-chat with an agent loses the
@@ -103,14 +103,14 @@ for n in "${WHICH[@]}"; do
   [[ -n "${CMD[$n]-}" ]] || { fail "no recording number $n (0-4)"; exit 1; }
   if [[ "$n" == 0 ]]; then
     command -v terraform >/dev/null 2>&1 || { fail "recording 0 needs terraform"; exit 1; }
-  else
+  elif [[ "$n" != 1 ]]; then
     kubectl -n kagent get deploy kagent-controller >/dev/null 2>&1 \
-      || { fail "kagent is not installed on the hub — run 'make hub-08' once before recording it"; exit 1; }
+      || { fail "kagent is not installed on the hub — run 'make hub-08' or 'make record N=1' first"; exit 1; }
   fi
 done
 
 if [[ -z "${RECORD_YES-}" ]]; then
-  warn "Recording deletes agents first and creates them again."
+  warn "Recording uninstalls kagent and its agents first, and installs them again."
   note "Fine before the event. Not while people are playing."
   [[ " ${WHICH[*]} " == *" 0 "* ]] && note "Recording 0 also creates a second cluster for a few minutes, then deletes it."
   if [[ -t 0 ]]; then
@@ -141,9 +141,18 @@ for n in "${WHICH[@]}"; do
     name="$(sed -n 's/^  name: //p' "${f[0]}" | head -1)"
     kubectl -n kagent delete agent "$name" --ignore-not-found --wait=true >/dev/null
   else
-    kubectl -n kagent delete agents.kagent.dev --all --wait=true >/dev/null
-    wait_for "the agents' pods to go" 120 \
-      "[[ \$(kubectl -n kagent get pods --no-headers 2>/dev/null | grep -c Terminating) -eq 0 ]]"
+    # The install is recorded as a first install, so kagent is taken off the
+    # hub completely beforehand: Helm then says "installed" rather than
+    # "upgraded", and every pod in the listing is seconds old. Chat history
+    # goes with it. hub-08 puts all of it back, on screen.
+    kubectl -n kagent delete agents.kagent.dev --all --wait=true >/dev/null 2>&1 || true
+    kubectl -n kagent delete remotemcpservers.kagent.dev --all --wait=true >/dev/null 2>&1 || true
+    kubectl -n kagent delete deploy kagent-guard --ignore-not-found >/dev/null
+    helm -n kagent uninstall kagent --wait --timeout 5m >/dev/null 2>&1 || true
+    helm -n kagent uninstall kagent-crds --wait --timeout 5m >/dev/null 2>&1 || true
+    kubectl -n kagent delete pvc --all --wait=true >/dev/null 2>&1 || true
+    wait_for "kagent's pods to go" 300 \
+      "[[ \$(kubectl -n kagent get pods --no-headers 2>/dev/null | wc -l) -eq 0 ]]"
   fi
 
   printf '\n%s%s● recording %s%s  %s\n' "$BOLD" "$RED" "$n" "$RESET" "${CMD[$n]}"

@@ -432,6 +432,10 @@ STYLE = """
 @media(prefers-color-scheme:dark){:root{--bg:#171715;--fg:#ece9e4;--dim:#9a9791;
       --line:#2f2e2b;--card:#1f1f1d;--accent:#e08b4c;--r1:#6ea8e0;--r2:#e08b4c;
       --ok:#6cc08b;--bad:#f2857d}}
+/* /board?embed, framed inside the slide deck: always dark, on the deck's black. */
+:root.embed{--bg:#000;--fg:#ece9e4;--dim:#9a9791;
+      --line:#2f2e2b;--card:#141413;--accent:#e08b4c;--r1:#6ea8e0;--r2:#ff7633;
+      --ok:#6cc08b;--bad:#f2857d}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);
      font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -693,6 +697,7 @@ td.n{color:var(--dim);text-align:right;width:2em}
 <table><thead><tr><th></th><th>Player</th><th>Flags, easiest to hardest</th><th style="text-align:right">Score</th></tr></thead>
 <tbody id="rows"></tbody></table>
 <script>
+if(new URLSearchParams(location.search).has("embed"))document.documentElement.classList.add("embed");
 const $=id=>document.getElementById(id);
 let B=null, skew=0;
 const NAMES={lobby:"Waiting to start",grafana:"Round 1 · Grafana",kagent:"Round 2 · kagent",done:"Final scores"};

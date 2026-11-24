@@ -54,7 +54,7 @@ Then, in the room:
 | | |
 |---|---|
 | Players | the CTF address, as a QR code on a slide |
-| Projector | `/board` |
+| Projector | the deck, which shows `/board` live during the rounds |
 | You | `/admin` — start round one, start round two, finish |
 | The deck | hosted on the hub; `make status` prints its address |
 | Between the rounds | the deck: recordings of kagent and the agents being built |

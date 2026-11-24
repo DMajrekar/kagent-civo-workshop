@@ -1,39 +1,5 @@
 import { motion } from 'framer-motion'
-import { Slide, Eyebrow, Title, Bullets, Code, fadeUp } from '../ui.jsx'
-
-const logql = `{service="checkout"}                 one service
-{service="auth", level="warn"}       narrow by level
-{env="production"} |= "timeout"      lines containing text
-
-sum by (service) (
-  count_over_time({env="production"}[1h])
-)                                    how many, per service`
-
-export function RoundOneSlide() {
-  return (
-    <Slide>
-      <Eyebrow>
-        <span className="r1">Round one · 20 minutes</span>
-      </Eyebrow>
-      <Title small>Grafana, and a query box</Title>
-      <div className="two-col wide-right" style={{ marginTop: 30, gap: 60 }}>
-        <div className="col">
-          <Bullets
-            size={38}
-            items={[
-              { text: 'Open Grafana from your page', sub: 'It lands in Explore, on the last seven days.' },
-              { text: 'Labels: service, level, env', sub: 'Eight services. Four levels.' },
-              { text: 'The logs are in UTC', sub: 'Grafana shows your local time.' },
-            ]}
-          />
-        </div>
-        <div className="col">
-          <Code delay={0.9} style={{ fontSize: 25 }}>{logql}</Code>
-        </div>
-      </div>
-    </Slide>
-  )
-}
+import { Slide, Eyebrow, Title, Bullets, fadeUp } from '../ui.jsx'
 
 export function InterludeSlide() {
   return (
