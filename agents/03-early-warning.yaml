@@ -14,6 +14,7 @@ spec:
   description: Looks for what is about to break, not what already has.
   declarative:
     modelConfig: default-model-config
+    stream: true
     systemMessage: |
       You look for problems that have not happened yet in seven days of
       production logs, queried through Grafana and Loki.

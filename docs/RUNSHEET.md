@@ -1,10 +1,10 @@
 # Run sheet
 
-Format: a capture-the-flag in two twenty-minute rounds. Players are on their
+Format: a capture-the-flag in two rounds, ten minutes then fifteen. Players are on their
 own phones over mobile data; there is no venue wifi and nothing to install.
 You are on a laptop with a connection of your own (a tethered phone is fine).
 
-Allow about fifty-five minutes end to end.
+Allow about forty minutes end to end.
 
 ## In the room
 
@@ -13,13 +13,13 @@ Allow about fifty-five minutes end to end.
 | 00:00 | Welcome. How an alert gets handled, and what the logs already knew. Then what Grafana looks like. | deck | — |
 | 00:02 | Everyone joins | QR code slide, then deck: the live scoreboard (names appear as they join) | Wait until the count stops climbing. |
 | 00:05 | **Round one — Grafana** | deck: the live scoreboard | `/admin` → *Start round 1*. Say the logs are in UTC. |
-| 00:25 | Time. What did people find? What did nobody find? | deck: the live scoreboard | Look at which columns are empty. They will be the last two. |
-| 00:27 | What kagent is. An agent is a model, a prompt and some tools. | deck | — |
-| 00:29 | A cluster, then kagent going on to it | deck: six recordings, full screen | Two for the cluster, four for the install. Each holds its last frame until you move on. |
-| 00:30 | Three agents: no briefing, a good briefing, a specialist | deck: a slide then a recording for each | The diff between agent 1 and 2 is all prompt. Say so. |
-| 00:33 | **Round two — kagent** | deck: the live scoreboard | `/admin` → *Start round 2*. |
-| 00:53 | Time. Read the scoreboard together. | deck: the live scoreboard | `/admin` → *Finish*. |
-| 00:55 | Close | deck: the live scoreboard | — |
+| 00:15 | Time. What did people find? What did nobody find? | deck: the live scoreboard | Look at which columns are empty. They will be the last two. |
+| 00:17 | What kagent is. An agent is a model, a prompt and some tools. | deck | — |
+| 00:19 | A cluster, then kagent going on to it | deck: six recordings, full screen | Two for the cluster, four for the install. Each holds its last frame until you move on. |
+| 00:20 | Three agents: no briefing, a good briefing, a specialist | deck: a slide then a recording for each | The diff between agent 1 and 2 is all prompt. Say so. |
+| 00:23 | **Round two — kagent** | deck: the live scoreboard | `/admin` → *Start round 2*. |
+| 00:38 | Time. Read the scoreboard together. | deck: the live scoreboard | `/admin` → *Finish*. |
+| 00:40 | Close | deck: the live scoreboard | — |
 
 **The projector stays on the deck.** The scoreboard slides are the real
 `/board`, live, framed in the deck, so there is no window to switch to. You
@@ -46,14 +46,14 @@ headline, but the grid underneath is the argument:
   "which service is loudest". Say so. The agent did not make that easier.
 - **The right-hand columns are mostly orange, or empty.** A service that is
   slowing down with no errors, and a certificate that has not expired yet.
-  Nothing was hidden — every one of those lines was in Grafana for twenty
+  Nothing was hidden — every one of those lines was in Grafana for ten
   minutes. The difference was knowing what to ask.
 - **Some people did better with `log-reader` than others did with
   `log-detective`.** The quality of the answer is mostly the quality of the
   question. That is the most transferable thing in the session.
 
 Be straight about the comparison: round two has a head start, because people
-have had twenty minutes with the data already. It is a demonstration, not an
+have had ten minutes with the data already. It is a demonstration, not an
 experiment, and someone in the room will say so if you do not.
 
 ## Before the day

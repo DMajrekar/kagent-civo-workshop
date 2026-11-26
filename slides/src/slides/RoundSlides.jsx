@@ -6,7 +6,7 @@ export function InterludeSlide() {
     <Slide style={{ justifyContent: 'center' }}>
       <Eyebrow>Time</Eyebrow>
       <motion.h1 className="title" style={{ fontSize: 124, maxWidth: 1500 }} variants={fadeUp} initial="hidden" animate="show" custom={0.2}>
-        What did <span className="accent">nobody</span> find?
+        Now let's have <span className="accent">AI</span> help us
       </motion.h1>
     </Slide>
   )
@@ -16,7 +16,7 @@ export function RoundTwoSlide() {
   return (
     <Slide>
       <Eyebrow>
-        <span className="r2">Round two · 20 minutes</span>
+        <span className="r2">Round two · 15 minutes</span>
       </Eyebrow>
       <Title small>Same flags. Now ask.</Title>
       <div style={{ marginTop: 60, maxWidth: 1500 }}>

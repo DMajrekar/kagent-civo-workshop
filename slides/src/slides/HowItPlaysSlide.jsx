@@ -23,7 +23,7 @@ export default function HowItPlaysSlide() {
       <Eyebrow>How it plays</Eyebrow>
       <Title small>Twelve flags. Two rounds. One scoreboard.</Title>
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 36, marginTop: 70 }}>
-        <Round color="var(--r1)" label="Round one · 20 minutes" tool="Grafana" note="The logs and a query box. Find what you can." delay={0.5} />
+        <Round color="var(--r1)" label="Round one · 10 minutes" tool="Grafana" note="The logs and a query box. Find what you can." delay={0.5} />
         <motion.div
           style={{ alignSelf: 'center', fontSize: 72, color: 'var(--dim)' }}
           initial={{ opacity: 0 }}
@@ -32,7 +32,7 @@ export default function HowItPlaysSlide() {
         >
           →
         </motion.div>
-        <Round color="var(--r2)" label="Round two · 20 minutes" tool="kagent" note="The same logs, and agents to ask. Carry on where you stopped." delay={1.4} />
+        <Round color="var(--r2)" label="Round two · 15 minutes" tool="kagent" note="The same logs, and agents to ask. Carry on where you stopped." delay={1.4} />
       </div>
       <motion.p className="subtitle" style={{ marginTop: 64, maxWidth: 1450 }} variants={fadeUp} initial="hidden" animate="show" custom={2.2}>
         Same flags in both rounds. Each one you solve is marked with the round it fell in.

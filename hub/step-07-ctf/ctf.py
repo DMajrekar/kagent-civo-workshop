@@ -32,7 +32,10 @@ GRAFANA_URL = os.environ.get("GRAFANA_URL", "").strip()
 KAGENT_URL = os.environ.get("KAGENT_URL", "").strip().rstrip("/")
 KAGENT_API = os.environ.get("KAGENT_API", "").strip().rstrip("/")
 KAGENT_NS = os.environ.get("KAGENT_NAMESPACE", "kagent")
-ROUND_SECONDS = int(os.environ.get("ROUND_SECONDS", "1200"))
+ROUND_SECONDS = int(os.environ.get("ROUND_SECONDS", "600"))
+# Round two is shorter: asking is quicker than typing queries.
+ROUND2_SECONDS = int(os.environ.get("ROUND2_SECONDS", "900"))
+PHASE_SECONDS = {"grafana": ROUND_SECONDS, "kagent": ROUND2_SECONDS}
 JOIN_NOTICE = os.environ.get(
     "JOIN_NOTICE", "Your email identifies you in this session. "
                    "The scoreboard shows a generated handle, never your email.")
@@ -245,7 +248,7 @@ def round_view():
                 "ends": ends, "left_ms": left,
                 "open": phase in ROUND_OF and left > 0,
                 "kagent": phase in ("kagent", "done"),
-                "seconds": ROUND_SECONDS}
+                "seconds": PHASE_SECONDS.get(phase, ROUND_SECONDS)}
 
 
 def admin_action(action):
@@ -253,13 +256,13 @@ def admin_action(action):
         t = now_ms()
         if action != "add_minute":
             # Whatever was running stops now: a round cut short must not be
-            # credited with its full twenty minutes on the scoreboard.
+            # credited with its full length on the scoreboard.
             for info in STATE["rounds"].values():
                 info["ends"] = min(info["ends"], t)
         if action in ("start_grafana", "start_kagent"):
             phase = "grafana" if action == "start_grafana" else "kagent"
             STATE["phase"], STATE["started"] = phase, t
-            STATE["ends"] = t + ROUND_SECONDS * 1000
+            STATE["ends"] = t + PHASE_SECONDS[phase] * 1000
             STATE["rounds"][str(ROUND_OF[phase])] = {"started": t, "ends": STATE["ends"]}
         elif action == "add_minute":
             if STATE["phase"] not in ROUND_OF:

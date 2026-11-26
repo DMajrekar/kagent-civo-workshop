@@ -29,8 +29,8 @@ export default function PlatformSlide() {
           />
         ))}
 
-        <Box x={1150} y={370} w={520} h={220} delay={1.4} title="Loki" sub="Every line, for a week. Labelled by service and level." titleStyle={{ fontSize: 44 }} subStyle={{ fontSize: 26 }} />
-        <Box x={1150} y={670} w={520} h={150} accent delay={2.0} title="Grafana" sub="Where we go to read them." titleStyle={{ fontSize: 44 }} subStyle={{ fontSize: 26 }} />
+        <Box x={1150} y={370} w={520} h={220} delay={1.4} title="Loki" titleStyle={{ fontSize: 44 }} />
+        <Box x={1150} y={670} w={520} h={150} accent delay={2.0} title="Grafana" titleStyle={{ fontSize: 44 }} />
       </div>
 
       <motion.p

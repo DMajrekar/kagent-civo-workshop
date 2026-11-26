@@ -16,11 +16,15 @@ providers:
   openAI:
     provider: OpenAI
     # Must support tool calling. See docs/DEMO-PROMPTS.md for why this one.
-    model: DeepSeek-V4-Pro
+    model: DeepSeek-V41-Flash
     apiKeySecretRef: kagent-relax
     apiKeySecretKey: RELAX_API_KEY
     config:
       baseUrl: https://api.relax.ai/v1
+      # Left on, the model thinks for hundreds of tokens before every tool
+      # call and an answer takes minutes. Off, it is as accurate here and
+      # several times faster. relax.ai accepts "none" or "high" only.
+      reasoningEffort: none
 
 ui:
   # Server-side calls from the dashboard go to the guard, not the controller.

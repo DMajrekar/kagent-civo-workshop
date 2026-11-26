@@ -52,8 +52,8 @@ export const slides = [
   JoinSlide,
   BoardLobby, //           live: names appear; -> /admin: start round 1; stay for the round
   InterludeSlide, //       back from round one
-  AgentIsResourceSlide,
   McpSlide,
+  AgentIsResourceSlide,
   InstallSlide,
   ...DemoCluster, //       recordings: terraform apply, then an empty cluster
   ...DemoInstall, //       recordings: hub-08, a slide per section

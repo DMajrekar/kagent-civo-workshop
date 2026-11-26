@@ -1,8 +1,8 @@
 # Your cluster called — a kagent CTF on Civo
 
-A capture-the-flag in a week of production logs, played twice. For twenty
+A capture-the-flag in a week of production logs, played twice. For ten
 minutes the room has **Grafana**. Then the instructor unlocks **kagent**, and
-for twenty more the room has agents. Same logs, same flags, one scoreboard
+for fifteen more the room has agents. Same logs, same flags, one scoreboard
 that shows which tool found what.
 
 **Players need a phone and nothing else.** No laptop, no install, no venue
@@ -105,6 +105,7 @@ agent. Four things stop that here:
   `docs/INCIDENTS.md` in step; CI fails if they disagree.
 - **Agents** are plain kagent `Agent` manifests in `agents/`. The number prefix
   is only the order `make help` lists them in.
-- **Round length** is `ROUND_SECONDS` in `.env` (default 1200).
+- **Round length** is `ROUND_SECONDS` (round one, default 600) and
+  `ROUND2_SECONDS` (round two, default 900) in `.env`.
 
 `DEMO_AUTO=1` runs any step without the press-enter pauses.

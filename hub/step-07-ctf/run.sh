@@ -15,7 +15,8 @@ export KUBECONFIG="$STATE/hub.kubeconfig"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NS="${OBS_NAMESPACE:-observability}"
 IMAGE="${CTF_IMAGE:-python:3.12-alpine}"
-ROUND_SECONDS="${ROUND_SECONDS:-1200}"
+ROUND_SECONDS="${ROUND_SECONDS:-600}"
+ROUND2_SECONDS="${ROUND2_SECONDS:-900}"
 
 banner "Hub — step 07: the CTF app"
 
@@ -63,6 +64,7 @@ ns = "${NS}"
 env = {
     "PORT": "8080", "PYTHONUNBUFFERED": "1", "DATA_PATH": "/data/ctf.json",
     "ROUND_SECONDS": "${ROUND_SECONDS}",
+    "ROUND2_SECONDS": "${ROUND2_SECONDS}",
     "PUBLIC_URL": """${PUB_URL}""",
     "KAGENT_URL": """${KAGENT_URL}""",
     "GRAFANA_URL": """${GRAF_URL}""",

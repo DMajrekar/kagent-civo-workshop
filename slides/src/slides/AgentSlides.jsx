@@ -191,7 +191,7 @@ export function SetupSlide() {
       <div className="two-col" style={{ marginTop: 20, gap: 56, alignItems: 'start', paddingTop: 30, gridTemplateColumns: '0.8fr 1.2fr' }}>
         <Col label="Model provider" what="What every agent thinks with." delay={0.5}>
           {'kind: ModelConfig\nmetadata:\n  name: default-model-config\nspec:\n'}
-          {hl('  provider: OpenAI\n  model: DeepSeek-V4-Pro\n')}
+          {hl('  provider: OpenAI\n  model: DeepSeek-V41-Flash\n')}
           {'  openAI:\n'}
           {hl('    baseUrl: https://api.relax.ai/v1\n')}
           {'  apiKeySecret: kagent-relax\n  apiKeySecretKey: RELAX_API_KEY'}

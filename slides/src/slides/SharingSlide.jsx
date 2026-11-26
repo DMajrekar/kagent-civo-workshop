@@ -30,13 +30,13 @@ export default function SharingSlide() {
   return (
     <Slide>
       <Eyebrow>Behind the curtain</Eyebrow>
-      <Title small>One kagent, a room full of strangers</Title>
+      <Title small>Workshop Environment</Title>
 
       <div style={{ position: 'absolute', inset: 0 }}>
         <svg width={1920} height={1080} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           <ArrowDefs />
           <Arrow from={[360, 560]} to={[480, 560]} delay={t.ingress - 0.2} />
-          <Arrow from={[640, 480]} to={[640, 400]} label="who is this?" delay={t.ctf - 0.2} color="var(--cloud)" dashed labelOffset={[130, 6]} labelSize={22} />
+          <Arrow from={[640, 480]} to={[640, 400]} delay={t.ctf - 0.2} color="var(--cloud)" dashed />
           <Arrow from={[800, 560]} to={[920, 560]} delay={t.ui - 0.2} />
           <Arrow from={[1240, 560]} to={[1340, 560]} delay={t.guard - 0.2} />
           <Arrow from={[1500, 640]} to={[1500, 720]} delay={t.ctrl - 0.2} />
@@ -54,17 +54,6 @@ export default function SharingSlide() {
         <Node x={920} y={720} w={320} h={120} icon="chart" title="Grafana" delay={t.grafana} />
         <Node x={480} y={720} w={320} h={120} icon="logs" title="Loki" delay={t.loki} />
       </div>
-
-      <motion.p
-        className="subtitle"
-        style={{ position: 'absolute', left: 120, bottom: 110, maxWidth: 1100, fontSize: 36 }}
-        variants={fadeUp}
-        initial="hidden"
-        animate="show"
-        custom={5.0}
-      >
-        And nothing worth stealing: no Kubernetes tools, no built-in agents. The only tool is the read-only logs.
-      </motion.p>
     </Slide>
   )
 }

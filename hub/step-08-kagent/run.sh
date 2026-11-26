@@ -21,7 +21,7 @@ export KUBECONFIG="$STATE/hub.kubeconfig"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NS="${OBS_NAMESPACE:-observability}"
 KAGENT_VERSION="${KAGENT_VERSION:-0.10.1}"
-MODEL="${RELAX_MODEL:-DeepSeek-V4-Pro}"
+MODEL="${RELAX_MODEL:-DeepSeek-V41-Flash}"
 BASE_URL="${RELAX_BASE_URL:-https://api.relax.ai/v1}"
 
 banner "Hub — step 08: kagent, shared safely"
@@ -115,7 +115,7 @@ run "kubectl apply -f '$STATE/kagent-guard.yaml'"
 
 # ------------------------------------------------------------------- kagent
 OVERRIDE=""
-[[ "$MODEL"    != "DeepSeek-V4-Pro" ]]            && OVERRIDE+="   --set providers.openAI.model=$MODEL"
+[[ "$MODEL"    != "DeepSeek-V41-Flash" ]]         && OVERRIDE+="   --set providers.openAI.model=$MODEL"
 [[ "$BASE_URL" != "https://api.relax.ai/v1" ]]    && OVERRIDE+="   --set providers.openAI.config.baseUrl=$BASE_URL"
 KAGENT_URL="$(cat "$STATE/kagent-endpoint" 2>/dev/null || true)"
 [[ -n "$KAGENT_URL" ]] && OVERRIDE+="   --set ui.externalUrl=$KAGENT_URL"
@@ -213,8 +213,11 @@ check "nobody can pose as another player"    403 "$(code "$G/api/sessions?user_i
 
 # Privacy: a chat session made by one player must be invisible to another.
 SID="guard-probe-$(date +%s)"
+# The session has to belong to an agent that exists; any one will do. On a
+# first install there are none yet, and the warning below says so.
+PROBE_AGENT="$(kubectl -n kagent get agents.kagent.dev -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
 MADE=$(code -XPOST "$G/api/sessions" -H "$J" -H 'X-User-Id: probe-a@ctf' \
-  -d "{\"id\":\"$SID\",\"name\":\"guard probe\",\"agent_ref\":\"kagent/guard-probe\"}")
+  -d "{\"id\":\"$SID\",\"name\":\"guard probe\",\"agent_ref\":\"kagent/${PROBE_AGENT:-guard-probe}\"}")
 if [[ "$MADE" =~ ^2 ]]; then
   check "a player can read their own chat"     200 "$(code "$G/api/sessions/$SID" -H 'X-User-Id: probe-a@ctf')"
   OTHER=$(code "$G/api/sessions/$SID" -H 'X-User-Id: probe-b@ctf')
