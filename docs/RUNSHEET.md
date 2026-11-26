@@ -78,7 +78,8 @@ yourself, **on a phone, on mobile data, with wifi turned off**:
 - [ ] Solve a flag. `/board` shows an orange square.
 - [ ] Restart the CTF pod (`kubectl -n observability rollout restart deploy/ctf`).
       Scores and the clock survive.
-- [ ] Ask the relax.ai team for the rate limit on your key (docs/CAPACITY.md).
+- [ ] If the room is much larger than 18, check the relax.ai rate limit on
+      your key (docs/CAPACITY.md).
 - [ ] `make record`, then `make hub-10`, and watch all nine recordings on their
       slides at the deck's address. Do this last: it uninstalls and reinstalls
       kagent (wiping its chat history), deletes and recreates each agent, and

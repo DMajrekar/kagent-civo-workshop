@@ -106,8 +106,8 @@ output changes. `make record N="2 3 4"` needs only `hub-01` to `hub-04`,
    the seeded dataset; keep the two in step (CI fails if they disagree).
 2. **Rehearse** with the checklist in [`RUNSHEET.md`](RUNSHEET.md). Test from
    a phone on mobile data even if the venue has wifi: it is the hardest case.
-3. **Ask relax.ai for the rate limit** on your key and read
-   [`CAPACITY.md`](CAPACITY.md).
+3. **For a much larger room than 18, read [`CAPACITY.md`](CAPACITY.md)** and
+   ask relax.ai about the rate limit on your key.
 4. **On the morning, `make hub-05`**, at least ten minutes before the session.
    It re-seeds the dataset so that "the last seven days" ends today.
 
@@ -153,8 +153,9 @@ November 2026, 18 players.
   over from round one to round two; they are not reset.
 - **Speed came from the model settings, not the cluster.** Loki answered tool
   calls in under half a second throughout. See "The model" above.
-- **Load is still only partly measured.** Twelve questions at once took 65 to
-  176 seconds each in testing. Nothing larger has been measured.
+- **Speed was not an issue.** Nobody in the room remarked on how long answers
+  took, and the relax.ai team confirmed Flash as the right model for this.
+  See [`CAPACITY.md`](CAPACITY.md).
 
 ## Changing it
 

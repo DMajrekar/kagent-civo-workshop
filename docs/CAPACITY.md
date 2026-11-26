@@ -68,24 +68,16 @@ In order of effect:
 
 ## What changed with the CTF format
 
-These numbers were measured when every attendee ran an agent on their own
-cluster. The Loki side is unchanged — it is the same queries arriving at the
-same Loki — but three things are new and **none of them has been load-tested**:
+The numbers above were measured when every attendee ran an agent on their own
+cluster. The Loki side is unchanged: the same queries arrive at the same Loki.
+What is new is that the room shares one relax.ai key and one pod per agent.
 
-| Thing | Why it matters | Check before the day |
-|---|---|---|
-| **One relax.ai key for the room** | Every agent turn from every player is billed and rate-limited against the hub's single key. Before, each attendee had their own. | Ask relax.ai for the per-key rate limit and compare it with players × about 6 model calls per question. |
-| **Agent pods are shared** | One `log-detective` pod now serves everyone. kagent agents handle concurrent sessions, but 50 at once on one pod is not something this repo has measured. | Open the dashboard in several browsers and ask at the same moment. If it queues, raise `spec.declarative.deployment.replicas` in `agents/*.yaml`. |
-| **Round one is Grafana on phones** | Fifty people running a 7-day `count_over_time` in Explore is the same heavy query as the table above, arriving in a burst when round one starts. | Covered by the 4-core numbers above, but only up to 100 concurrent. |
+That has now been run for real. In November 2026, 18 players shared the hub
+on `DeepSeek-V41-Flash` with reasoning off, and nobody remarked on the speed
+of the answers. The relax.ai team confirmed Flash as the right model for
+this. In testing beforehand, twelve questions asked at the same moment took
+65 to 176 seconds each and none failed.
 
-`scripts/loadtest-mcp.py` still measures the Loki path. Point it at a
-port-forward of `svc/mcp-public`, since the endpoint is no longer public.
-
-## Other limits
-
-| Thing | Capacity | Set by |
-|---|---|---|
-| Players | no fixed limit | state is one JSON file; handles are unique to 576 before the word pairs repeat (the number suffix keeps them distinct) |
-| Guesses | 12 a minute per player | `SUBMIT_PER_MIN` in `ctf.py` |
-| Joins | 120 a minute per IP address | `JOIN_PER_MIN` — loose on purpose, because a mobile carrier puts a whole room behind a few addresses |
-| relax.ai | unknown | ask the relax team — see above |
+No further load testing is planned. If a much larger room is expected, the
+two things to look at first are the relax.ai rate limit on the shared key and
+`spec.declarative.deployment.replicas` in `agents/*.yaml`.
