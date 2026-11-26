@@ -195,5 +195,5 @@ November 2026, 18 players.
 | `examples/` | What the README gives attendees: kagent values and an agent scaffold. |
 | `docs/RUNSHEET.md` | The plan for the session. |
 | `docs/INCIDENTS.md` | The seeded dataset, its six incidents and the twelve flags. |
-| `docs/CAPACITY.md` | Load measurements, and what is still unmeasured. |
+| `docs/CAPACITY.md` | Load measurements, and how the first event ran. |
 | `docs/DEMO-PROMPTS.md` | Questions known to find each incident, and the model comparison. |
