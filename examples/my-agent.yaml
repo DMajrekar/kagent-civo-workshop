@@ -1,8 +1,7 @@
 # A scaffold to make your own.
 #
-# You already have two: cluster-scout, which can see this cluster, and
-# log-detective, which can also see the log platform. Agents are cheap — a
-# third that does one job well is usually better than widening either.
+# Agents are cheap. One that does a single job well is usually better than
+# one that tries to do everything.
 #
 # Copy this, rename it, and edit the two things that matter: the system prompt
 # and the tool list.
@@ -30,9 +29,11 @@ spec:
       say plainly when you cannot determine something.
 
     tools:
-      # Tools come from MCP servers. These two already exist in your cluster;
-      # `kubectl -n kagent get remotemcpservers` lists them, and the status of
-      # each shows every tool it discovered.
+      # Tools come from MCP servers. `kubectl -n kagent get remotemcpservers`
+      # lists the ones you have, and the status of each shows every tool it
+      # discovered. kagent-tool-server comes with the install. workshop-logs
+      # is the workshop's log endpoint: delete that entry unless you have
+      # created one (see "Give an agent your logs" in the README).
       - type: McpServer
         mcpServer:
           apiGroup: kagent.dev

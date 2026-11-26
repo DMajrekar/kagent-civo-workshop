@@ -1,0 +1,44 @@
+# kagent on your own cluster, using relax.ai as the model.
+#
+#   helm upgrade --install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
+#     --namespace kagent --version 0.10.1 --values examples/kagent-values.yaml
+#
+# relax.ai speaks the OpenAI API, so kagent treats it as an OpenAI provider
+# at a different address. Any other OpenAI-compatible endpoint works the same
+# way: change `model` and `baseUrl`, and put that provider's key in the Secret.
+
+providers:
+  default: openAI
+  openAI:
+    provider: OpenAI
+
+    # Must support tool calling: an agent is a loop of tool calls.
+    model: DeepSeek-V41-Flash
+
+    # The key lives in a Secret you create before installing (see the README).
+    apiKeySecretRef: kagent-relax
+    apiKeySecretKey: RELAX_API_KEY
+
+    # Everything under `config` is copied into the ModelConfig resource.
+    config:
+      baseUrl: https://api.relax.ai/v1
+      # With reasoning on, this model thinks for hundreds of tokens before
+      # every tool call and an answer takes minutes. Off, it was as accurate
+      # in the workshop and several times faster. Remove the line to compare.
+      reasoningEffort: none
+
+# A second tool server that expects a Grafana to talk to. Off until you have one.
+grafana-mcp:          { enabled: false }
+
+# The chart ships ten ready-made agents. k8s-agent is enough to start with: it
+# can look around the cluster it runs in. Each one you turn on is another pod.
+k8s-agent:            { enabled: true }
+kgateway-agent:       { enabled: false }
+istio-agent:          { enabled: false }
+promql-agent:         { enabled: false }
+observability-agent:  { enabled: false }
+argo-rollouts-agent:  { enabled: false }
+helm-agent:           { enabled: false }
+cilium-policy-agent:  { enabled: false }
+cilium-manager-agent: { enabled: false }
+cilium-debug-agent:   { enabled: false }

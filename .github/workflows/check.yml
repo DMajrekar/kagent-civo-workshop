@@ -54,7 +54,7 @@ jobs:
       - name: Every step has a title
         run: |
           fail=0
-          for d in workshop/step-* hub/step-*; do
+          for d in hub/step-*; do
             grep -q '^# title: ' "$d/run.sh" || {
               echo "::error file=$d/run.sh::missing '# title:' line (make help reads it)"; fail=1; }
           done
@@ -82,21 +82,28 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
 
-      - name: Rehearsal covers every step
+      - name: Flags are answerable
         run: |
           python3 - <<'PY'
-          import glob, re, sys
-          on_disk = sorted(d.split('step-')[1][:2] for d in glob.glob('workshop/step-*')
-                           if not d.endswith(('step-00-prework', 'step-99-cleanup')))
-          src = open('scripts/rehearse.sh').read()
-          # The defaults line, not the first STEPS=( which is STEPS=("$@").
-          m = re.search(r'STEPS=\((\d[\d ]*)\)', src)
-          listed = m.group(1).split() if m else []
-          if listed != on_disk:
-              print(f"::error file=scripts/rehearse.sh::rehearse runs {listed} "
-                    f"but the repo has {on_disk}")
-              sys.exit(1)
-          print("rehearsal step list matches the repo")
+          # Every flag must accept its own documented answer, and the flag
+          # table in docs/INCIDENTS.md must list every flag the app serves.
+          import importlib.util, os, re, sys
+          os.environ["CTF_SECRET"] = "ci"
+          spec = importlib.util.spec_from_file_location("ctf", "hub/step-07-ctf/ctf.py")
+          ctf = importlib.util.module_from_spec(spec); spec.loader.exec_module(ctf)
+          doc = open("docs/INCIDENTS.md").read()
+          rows = dict(re.findall(r"^\| `([a-z]+)` \|.*\| `([^`]+)` \|\s*$", doc, re.M))
+          bad = 0
+          for f in ctf.FLAGS:
+              ans = rows.get(f["id"])
+              if ans is None:
+                  print(f"::error file=docs/INCIDENTS.md::flag {f['id']} is not in the flag table"); bad = 1
+              elif not ctf.check_flag(f, ans):
+                  print(f"::error file=hub/step-07-ctf/ctf.py::flag {f['id']} rejects its documented answer {ans!r}"); bad = 1
+          for extra in set(rows) - {f["id"] for f in ctf.FLAGS}:
+              print(f"::error file=docs/INCIDENTS.md::flag table lists {extra}, which the app does not serve"); bad = 1
+          print(f"{len(ctf.FLAGS)} flags checked")
+          sys.exit(bad)
           PY
 
       - name: Charts and images are pinned
@@ -127,3 +134,20 @@ jobs:
             exit 1
           fi
           echo "clean"
+
+  # The deck is React and has to compile. A typo in one slide is otherwise
+  # found at the moment the deck is opened in front of a room.
+  slides:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: slides
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: slides/package-lock.json
+      - run: npm ci
+      - run: npm run build

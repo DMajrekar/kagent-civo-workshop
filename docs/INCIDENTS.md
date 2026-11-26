@@ -3,8 +3,8 @@
 The workshop lives or dies on this file. Random log noise produces no insights,
 the agent says "I found some errors", and the room is unimpressed. What you
 want is a **fleet with a plot** — a handful of deliberate, discoverable
-incidents with known answers, so step-04 has guaranteed payoffs you can
-rehearse.
+incidents with known answers, so every flag in the CTF has exactly one right answer
+and you know it in advance.
 
 Shape: a fictional e-commerce platform, 8 services, 7 days of history.
 
@@ -52,6 +52,49 @@ the agent is doing more than grep:
 #5 is the best one to end on. "Nothing is broken, but this will break in nine
 days" is the moment people understand why an agent beats a dashboard.
 
+## The flags
+
+Twelve questions, two per incident, in the order the page shows them. Each
+answer is a name, a version or an hour of the day — never a date or a count —
+so re-seeding the dataset on the morning of the event changes none of them.
+
+| Flag | Pts | Incident | Question, in short | Answer |
+|------|-----|----------|--------------------|--------|
+| `volume` | 100 | 4 | Which service writes most of the log lines? | `notifications` |
+| `level` | 100 | 4 | At which level is it flooding? | `debug` |
+| `regressed` | 100 | 1 | Whose error count jumped and never recovered? | `checkout` |
+| `version` | 150 | 1 | Which version was running when it started? | `v2.3.1` |
+| `build` | 150 | 1 | What build number did that version log? | `8812` |
+| `oom` | 100 | 3 | Which service keeps being OOM-killed? | `image-resizer` |
+| `exit` | 150 | 3 | What exit code does it log each time? | `137` |
+| `nightly` | 150 | 2 | Which service fails at the same time every night? | `orders-db-proxy` |
+| `hour` | 150 | 2 | At what hour (UTC) does it start? | `2` |
+| `job` | 200 | 2 | What is the scheduled job that starts then? | `orders-reconcile` |
+| `slow` | 250 | 6 | Which service is slowing down with no errors at all? | `search` |
+| `cert` | 300 | 5 | Which hostname's certificate is about to expire? | `auth.internal` |
+
+The definitions, including every spelling each flag accepts, are `FLAGS` in
+`hub/step-07-ctf/ctf.py`. CI checks this table against them, so the two cannot
+drift apart.
+
+**The order is the difficulty curve.** The first six fall to a single
+`sum by (service)` in Grafana, which is deliberate: round one should feel
+possible. `hour` and `job` need you to think about time of day. `slow` has no
+errors to search for, and `cert` is a warning about something that has not
+happened. In rehearsal nobody found those two by hand — they are what round
+two is for.
+
+**The answers are in a public repository.** Anyone who goes looking will find
+this file. That is fine for a workshop — the point is the comparison between
+the rounds, not the prize — but do not put anything worth cheating for on the
+scoreboard.
+
+**Grafana shows local time; the logs are UTC.** A phone in London in winter
+shows the nightly failure at 02:00. One in Berlin shows 03:00, and its owner
+will be told they are wrong. The `hour` question says "UTC" for this reason,
+and it is worth saying out loud when round one starts if the room is not on
+UTC.
+
 ## Backfill mechanics
 
 ### The rule that matters
@@ -95,4 +138,4 @@ dataset to the validator.
 - Anchor all timestamps relative to *run time*, not absolute dates, so
   "yesterday" is always yesterday no matter when you re-seed.
 - Keep the live generators running too, so the most recent hour is genuinely
-  live and `make step-05`'s "errors in the past 24h" report is never empty.
+  live and "what is happening right now" always has an answer.

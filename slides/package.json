@@ -1,0 +1,22 @@
+{
+  "name": "ctf-slides",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Slide deck for 'Your cluster called', the kagent CTF on Civo",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "qrcode": "^1.5.4",
+    "vite": "^7.1.0"
+  }
+}

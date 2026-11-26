@@ -1,5 +1,10 @@
 # Verified demo prompts
 
+> Measured in the build-your-own-cluster format, against the agent that is now
+> `agents/02-log-detective.yaml`. The prompts and the dataset are unchanged, so
+> they still hold. In the CTF you are not asking these on stage — the room is —
+> but they are the best hints to give a player who is stuck in round two.
+
 Measured against the seeded dataset with `RELAX_MODEL=DeepSeek-V4-Pro`. Use
 these on stage; they are the ones that actually land.
 
@@ -16,7 +21,29 @@ you will not get it back in a 60-minute session.
 | *"Where is our log volume going?"* | #4 notifications debug spam | — | dataset verified, prompt not yet timed |
 | *"Which service is least healthy right now?"* | #3 image-resizer | — | dataset verified, prompt not yet timed |
 
-## Model choice: DeepSeek-V4-Pro, not Llama
+## Model choice now: DeepSeek-V41-Flash, reasoning off
+
+Measured on the hub in November 2026 with the three prompts above, through
+`log-detective`.
+
+| Model | Reasoning | Got worse | On a schedule | Will fail later | Right? |
+|---|---|---|---|---|---|
+| DeepSeek-V4-Pro | on | 164s | 277s | 211s | yes |
+| DeepSeek-V4-Pro | off | 29s | 115s | 130s | missed the certificate |
+| DeepSeek-V41-Flash | on | 335s | 125s | 256s | yes |
+| **DeepSeek-V41-Flash** | **off** | **37s** | **31s** | **89s** | **yes** |
+| Nemotron-3-Super | either | 36-52s | ~100s | ~150s | missed the certificate |
+| Muse-Glimmer-30B | off | timed out | failed | timed out | no answer |
+
+The Flash-off row is one question at a time; the others were measured four at
+a time, so read the table as a ranking. Twelve questions at once took Flash 65
+to 176 seconds each, with the same answers. The times in the table at the top
+of this file are from the earlier model.
+
+The setting is `reasoningEffort: none` in `hub/step-08-kagent/values.yaml`.
+The agents also set `stream: true`, so the answer appears as it is written.
+
+## The earlier choice: DeepSeek-V4-Pro, not Llama
 
 Both pass the tool-calling probe. Only one finds the incidents.
 

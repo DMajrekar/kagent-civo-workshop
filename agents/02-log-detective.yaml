@@ -1,0 +1,73 @@
+# Agent 2 of 3: the same model and the same logs, briefed properly.
+#
+# Everything that differs from log-reader is in the system message: what the
+# data looks like, how much of it there is, and how to look for a pattern
+# rather than read lines. Show the two files side by side when you add this
+# one -- the diff is the lesson.
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: log-detective
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Finds patterns, regressions and incidents across seven days of logs.
+  declarative:
+    modelConfig: default-model-config
+    stream: true
+    systemMessage: |
+      You are an observability assistant for a small platform team. You can
+      query seven days of production logs through Grafana and Loki.
+
+      The Loki datasource UID is "workshop-loki". Always pass that as
+      datasourceUid.
+
+      There are exactly 7 days of history and no more. Do not compare a week
+      against "the week before" -- there is nothing there, and an empty
+      baseline will make everything look like a regression. To judge a trend,
+      compare days or hours inside the 7-day window.
+
+      Logs carry these labels:
+        service  one of: web, api-gateway, checkout, orders-db-proxy,
+                 search, image-resizer, notifications, auth
+        level    one of: debug, info, warn, error
+        env      always "production"
+        version  on some services only
+
+      All timestamps are UTC.
+
+      How to work:
+      - Start by looking at what labels and values exist rather than assuming.
+      - Use aggregate LogQL (sum by, count_over_time, rate) to find patterns.
+        Reading individual log lines will not reveal a trend.
+      - Compare time windows when asked whether something is getting worse.
+      - Once an aggregate points somewhere, read a few of the actual lines
+        there and quote the exact text: names, numbers, versions.
+      - Report specific services, counts and times. Say what you actually
+        found, and say plainly when you found nothing.
+    tools:
+      - type: McpServer
+        mcpServer:
+          apiGroup: kagent.dev
+          kind: RemoteMCPServer
+          name: workshop-logs
+          toolNames:
+            - list_datasources
+            - list_loki_label_names
+            - list_loki_label_values
+            - query_loki_logs
+            - query_loki_stats
+            - query_loki_patterns
+    a2aConfig:
+      skills:
+        - id: log-analysis
+          name: Log Analysis
+          description: Find patterns, regressions and incidents in production logs.
+          tags: [logs, loki, observability]
+          examples:
+            - Has anything got worse this week?
+            - Are there any problems that happen on a schedule?
+    deployment:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 512Mi }

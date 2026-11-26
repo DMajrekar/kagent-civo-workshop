@@ -1,0 +1,54 @@
+# kagent on the hub, configured to be shared by a room.
+#
+# Two things differ from an ordinary install, and both matter:
+#
+#   1. Nothing that can read this cluster is installed. The chart's built-in
+#      agents and its Kubernetes tool server can list Secrets, and this
+#      cluster's Secrets include the model key. The only tool any agent here
+#      gets is the read-only Loki endpoint.
+#
+#   2. The dashboard does not talk to the controller directly. Its API calls go
+#      through kagent-guard (see run.sh), which lets players chat and nothing
+#      else, and every call carries the player's identity so chats stay private.
+
+providers:
+  default: openAI
+  openAI:
+    provider: OpenAI
+    # Must support tool calling. See docs/DEMO-PROMPTS.md for why this one.
+    model: DeepSeek-V41-Flash
+    apiKeySecretRef: kagent-relax
+    apiKeySecretKey: RELAX_API_KEY
+    config:
+      baseUrl: https://api.relax.ai/v1
+      # Left on, the model thinks for hundreds of tokens before every tool
+      # call and an answer takes minutes. Off, it is as accurate here and
+      # several times faster. relax.ai accepts "none" or "high" only.
+      reasoningEffort: none
+
+ui:
+  # Server-side calls from the dashboard go to the guard, not the controller.
+  backendInternalUrl: http://kagent-guard.kagent.svc.cluster.local:8080/api
+  # The ingress stamps each request with the player's identity; this makes the
+  # dashboard pass it on. Without it everyone is "admin@kagent.dev" and can
+  # read each other's chats.
+  additionalForwardedHeaders:
+    - X-User-Id
+
+controller:
+  auth:
+    mode: unsecure     # identity comes from X-User-Id, set by our own ingress
+
+# Everything below can see into the cluster it runs in. Off, all of it.
+kagent-tools:         { enabled: false }
+grafana-mcp:          { enabled: false }
+k8s-agent:            { enabled: false }
+kgateway-agent:       { enabled: false }
+istio-agent:          { enabled: false }
+promql-agent:         { enabled: false }
+observability-agent:  { enabled: false }
+argo-rollouts-agent:  { enabled: false }
+helm-agent:           { enabled: false }
+cilium-policy-agent:  { enabled: false }
+cilium-manager-agent: { enabled: false }
+cilium-debug-agent:   { enabled: false }

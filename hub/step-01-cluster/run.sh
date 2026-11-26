@@ -3,7 +3,7 @@
 #
 # The hub is the shared observability cluster the instructor runs. It holds
 # Loki with seven days of seeded logs, the applications generating them, the
-# MCP endpoint attendees point their agents at, and the webhook wall.
+# MCP endpoint the agents read them through, kagent, and the CTF app.
 #
 # Idempotent: if the cluster already exists this just refetches the kubeconfig.
 source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
@@ -12,15 +12,15 @@ require_env CIVO_API_KEY
 HUB_NAME="${HUB_CLUSTER_NAME:-kagent-workshop-hub}"
 HUB_REGION="$(echo "${CIVO_REGION:-lon1}" | tr '[:upper:]' '[:lower:]')"
 HUB_SIZE="${HUB_NODE_SIZE:-g4s.kube.medium}"
-HUB_NODES="${HUB_NODE_COUNT:-2}"
+HUB_NODES="${HUB_NODE_COUNT:-3}"   # 2 was enough before kagent and its agents moved in
 HUB_K8S="${HUB_K8S_VERSION:-1.35.0-k3s1}"
 STATE="$REPO_ROOT/.state"; mkdir -p "$STATE"
 export KUBECONFIG="$STATE/hub.kubeconfig"
 
 banner "Hub — step 01: the cluster"
 
-say "Everything the attendees query lives here. One cluster, running from now"
-say "until a month after the event, holding the logs their agents will read."
+say "Everything the room touches lives here: the logs, Grafana, kagent and the"
+say "CTF page. Players bring a phone and nothing else."
 printf '\n'
 note "cluster: $HUB_NAME   region: $HUB_REGION   nodes: ${HUB_NODES}x $HUB_SIZE"
 
