@@ -5,8 +5,10 @@ minutes the room has **Grafana**. Then the instructor unlocks **kagent**, and
 for fifteen more the room has agents. Same logs, same flags, one scoreboard
 that shows which tool found what.
 
-**Players need a phone and nothing else.** No laptop, no install, no venue
-wifi — everything runs on one Civo cluster and is reached over mobile data.
+**Players need a browser and nothing else.** A phone or a laptop, on venue
+wifi or mobile data: there is nothing to install, and everything runs on one
+Civo cluster. It was designed for a room with no wifi and works from a phone
+alone; the first time it ran, most of the room used the venue's wifi.
 
 **Backed by:** [kagent](https://kagent.dev) · [Civo Kubernetes](https://civo.com)
 · [relax.ai](https://relax.ai) · Grafana Loki over MCP
@@ -26,7 +28,7 @@ wifi — everything runs on one Civo cluster and is reached over mobile data.
    coloured by the round it fell in.
 
 ```
-   a phone, on mobile data                 the hub (one Civo cluster)
+   a browser, phone or laptop              the hub (one Civo cluster)
    ┌───────────────────┐                   ┌──────────────────────────────┐
    │  CTF page         │──── https ───────▶│  CTF app    flags, clock,    │
    │                   │                   │             scores           │

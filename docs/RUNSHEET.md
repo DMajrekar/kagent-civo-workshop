@@ -1,7 +1,8 @@
 # Run sheet
 
 Format: a capture-the-flag in two rounds, ten minutes then fifteen. Players are on their
-own phones over mobile data; there is no venue wifi and nothing to install.
+own phones or laptops, over venue wifi or mobile data; there is nothing to
+install, and it works with no venue wifi at all.
 You are on a laptop with a connection of your own (a tethered phone is fine).
 
 Allow about forty minutes end to end.

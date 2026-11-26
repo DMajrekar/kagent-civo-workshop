@@ -1,6 +1,6 @@
 # Your cluster called -- a capture-the-flag in a week of production logs.
 #
-# Players need nothing but a phone. Everything here is for the instructor:
+# Players need nothing but a browser. Everything here is for the instructor:
 # it builds the one cluster ("the hub") that the whole room plays against.
 #
 #   make             list the steps

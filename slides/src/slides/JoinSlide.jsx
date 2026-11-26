@@ -3,7 +3,7 @@ import { Slide, Title, fadeUp, stagger, item, ease } from '../ui.jsx'
 import { joinQr, joinUrl } from 'virtual:qr'
 
 const steps = [
-  { text: 'Scan the code', sub: 'Mobile data is fine. There is nothing to install.' },
+  { text: 'Scan the code', sub: 'Phone or laptop, wifi or mobile data. There is nothing to install.' },
   { text: 'Enter your email', sub: 'The scoreboard shows a made-up handle, never your address.' },
   { text: 'Keep the page open', sub: 'The flags appear on it when the first round starts.' },
 ]
