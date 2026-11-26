@@ -21,6 +21,15 @@ On your machine:
 
 Node and Docker are not needed. The deck is built in a container on the hub.
 
+On a fresh Ubuntu server, one script installs all of it:
+
+```bash
+sudo scripts/install-prereqs.sh              # add WITH_GH=1 for the GitHub CLI
+```
+
+It pins the versions the workshop was last built with and leaves alone
+anything already installed.
+
 Two keys, in `.env`:
 
 ```bash
@@ -84,10 +93,10 @@ screenshots and what to edit in `slides/src/event.js` for each event.
 
 Run `make hub-10` again after any change under `slides/`.
 
-**The three agent recordings are out of date.** They were made before the
-switch to the faster model and before streaming was turned on, so they show
-slower answers than the room gets. Re-record them (`make record N="2 3 4"`)
-the next time a hub is up.
+The agent recordings show each agent being applied and becoming ready. They
+do not show the manifest or an answer, so they only need redoing if that
+output changes. `make record N="2 3 4"` needs only `hub-01` to `hub-04`,
+`hub-06` and `hub-08` to have run.
 
 ## Before each event
 
@@ -168,7 +177,8 @@ November 2026, 18 players.
    removed by hand.
 4. Rotate the relax.ai key and the Civo key.
 5. Delete `.state/`. It holds the admin key and tokens for a hub that no
-   longer exists.
+   longer exists, and they get in the way of the next one: `hub-06` reuses a
+   saved Grafana token if it finds one, and a new Grafana will refuse it.
 
 ## Where things are
 
